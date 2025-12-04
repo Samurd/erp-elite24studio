@@ -12,6 +12,12 @@ services:
     image: app-php
     restart: unless-stopped
     environment:
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_NAME: ${ADMIN_NAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL}
+      SUPPORT_NAME: ${SUPPORT_NAME}
+      SUPPORT_PASSWORD: ${SUPPORT_PASSWORD}
       APP_NAME: ${APP_NAME:-Laravel}
       APP_ENV: ${APP_ENV:-production}
       APP_KEY: ${APP_KEY}
@@ -226,6 +232,12 @@ services:
     entrypoint: sh
     command: -c "echo '🟡 Esperando a la DB antes de migrar...'; until php artisan db:monitor > /dev/null 2>&1; do sleep 2; done; echo '✅ DB lista, ejecutando migraciones.'; php artisan migrate --force && php artisan db:seed --force"
     environment:
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_NAME: ${ADMIN_NAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL}
+      SUPPORT_NAME: ${SUPPORT_NAME}
+      SUPPORT_PASSWORD: ${SUPPORT_PASSWORD}
       APP_NAME: ${APP_NAME:-Laravel}
       APP_ENV: ${APP_ENV:-production}
       APP_KEY: ${APP_KEY}
