@@ -1,0 +1,61 @@
+# Dockerfile simplificado para Dokploy - Solo Laravel
+FROM php:8.2-fpm-alpine
+
+# Instalar dependencias del sistema necesarias para Laravel
+RUN apk add --no-cache \
+    libpng-dev \
+    libxml2-dev \
+    libzip-dev \
+    mysql-client \
+    git \
+    curl \
+    oniguruma-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip opcache
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
+
+# Configurar directorio de Trabajo
+WORKDIR /var/www
+
+# Configurar PHP para producción
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.interned_strings_buffer=8" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.max_accelerated_files=4000" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini \
+    && echo "opcache.fast_shutdown=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+
+# Copiar archivos de configuración de Composer
+COPY composer.json composer.lock ./
+
+# Instalar dependencias de PHP para producción
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader --classmap-authoritative
+
+# Copiar código fuerte
+COPY --chown=www-data:www-data . .
+
+# Configurar permisos para Laravel
+RUN chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
+
+# Crear usuario no-root para seguridad
+RUN addgroup -g 1000 appgroup && adduser -D -u 1000 -G appgroup appuser
+
+# Cambiar propietario de archivos críticos
+RUN chown -R appuser:appgroup /var/www
+
+# Cambiar al usuario no-root
+USER appuser
+
+# Ejecutar scripts de post-instalación de Composer
+RUN composer run-script post-autoload-dump
+
+# Generar key de aplicación si no existe
+RUN if [ -z "$APP_KEY" ]; then php artisan key:generate; fi
+
+# Exponer puerto para PHP-FPM
+EXPOSE 9000
+
+# Comando para iniciar PHP-FPM
+CMD ["php-fpm"]

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebSocket Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Test de Conexión WebSocket Reverb</h1>
+
+    <div id="status"></div>
+    <div id="logs"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+    <script>
+        const statusDiv = document.getElementById('status');
+        const logsDiv = document.getElementById('logs');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            logsDiv.appendChild(div);
+            console.log(message);
+        }
+
+        log('🔍 Iniciando pruebas de conexión...', 'info');
+
+        // Test 1: Verificar variables
+        const config = {
+            appKey: 'uzm6zk7qulcy2r8uxwpd',
+            wsHost: 'localhost',
+            wsPort: 8080,
+            wssPort: 8080,
+            forceTLS: false
+        };
+
+        log(`📋 Configuración:\n${JSON.stringify(config, null, 2)}`, 'info');
+
+        // Test 2: Intentar conexión WebSocket directa
+        log('🔌 Intentando conexión WebSocket directa...', 'info');
+        const ws = new WebSocket(`ws://${config.wsHost}:${config.wsPort}/app/${config.appKey}?protocol=7&client=js&version=8.4.0&flash=false`);
+
+        ws.onopen = () => {
+            log('✅ WebSocket conectado correctamente!', 'success');
+            statusDiv.innerHTML = '<div class="status success"><strong>✅ ÉXITO:</strong> La conexión WebSocket funciona correctamente</div>';
+        };
+
+        ws.onerror = (error) => {
+            log(`❌ Error en WebSocket: ${error}`, 'error');
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = (event) => {
+            log(`🔴 WebSocket cerrado - Code: ${event.code}, Reason: ${event.reason}`, 'info');
+        };
+
+        // Test 3: Intentar con Pusher
+        setTimeout(() => {
+            log('🔌 Intentando conexión con Pusher/Echo...', 'info');
+
+            try {
+                const pusher = new Pusher(config.appKey, {
+                    wsHost: config.wsHost,
+                    wsPort: config.wsPort,
+                    wssPort: config.wssPort,
+                    wsPath: '',
+                    forceTLS: config.forceTLS,
+                    enabledTransports: ['ws', 'wss'],
+                    disableStats: true,
+                    cluster: 'mt1',  // Required but ignored for self-hosted
+                    channelAuthorization: {
+                        endpoint: '/broadcasting/auth'
+                    }
+                });
+
+                pusher.connection.bind('connected', () => {
+                    log('✅ Pusher conectado correctamente!', 'success');
+                });
+
+                pusher.connection.bind('error', (err) => {
+                    log(`❌ Error en Pusher: ${JSON.stringify(err)}`, 'error');
+                    console.error('Pusher error:', err);
+                });
+
+                pusher.connection.bind('state_change', (states) => {
+                    log(`🔄 Pusher state change: ${states.previous} → ${states.current}`, 'info');
+                });
+            } catch (error) {
+                log(`❌ Error creando Pusher: ${error.message}`, 'error');
+                console.error('Pusher creation error:', error);
+            }
+        }, 2000);
+    </script>
+</body>
+
+</html>
