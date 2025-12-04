@@ -58,4 +58,8 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "echo '🟡 [Reverb] Esperando a la Base de Datos...'; until php artisan db:monitor > /dev/null 2>&1; do sleep 2; done; echo '✅ [Reverb] DB lista. Iniciando servicio...'; while true; do php artisan reverb:start --host=0.0.0.0 --port=8080; sleep 1; done"]
+# ANTES:
+# CMD ["sh", "-c", "...; while true; do php artisan reverb:start --host=0.0.0.0 --port=8080; sleep 1; done"]
+
+# DESPUÉS (Permite que Reverb use las ENVs de Docker Compose):
+CMD ["sh", "-c", "echo '🟡 [Reverb] Esperando a la Base de Datos...'; until php artisan db:monitor > /dev/null 2>&1; do sleep 2; done; echo '✅ [Reverb] DB lista. Iniciando servicio...'; while true; do php artisan reverb:start; sleep 1; done"]
