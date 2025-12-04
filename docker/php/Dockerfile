@@ -45,7 +45,8 @@ RUN apk add --no-cache \
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 RUN install-php-extensions pdo_mysql bcmath intl zip pcntl redis gd opcache
 
-
+# ✔ AÑADIR: Configuración de PHP para límites de subida y timeouts (CRÍTICO para 422)
+COPY docker/php/conf.d/custom.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
