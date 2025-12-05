@@ -13,6 +13,6 @@ Route::middleware(['web'])->group(function () {
     Broadcast::routes();
 });
 
-Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
+Route::apiResource('users', \App\Http\Controllers\Api\UserController::class)->names('api.users');
 Route::apiResource('meetings', \App\Http\Controllers\Api\MeetingController::class)->names('api.meetings');
-Route::apiResource('areas', \App\Http\Controllers\Api\AreaController::class)->only(['index', 'show']);
+Route::apiResource('areas', \App\Http\Controllers\Api\AreaController::class)->only(['index', 'show'])->names('api.areas');
