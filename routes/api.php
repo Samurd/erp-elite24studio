@@ -14,5 +14,5 @@ Route::middleware(['web'])->group(function () {
 });
 
 Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
-Route::apiResource('meetings', \App\Http\Controllers\Api\MeetingController::class);
+Route::apiResource('meetings', \App\Http\Controllers\Api\MeetingController::class)->names('api.meetings');
 Route::apiResource('areas', \App\Http\Controllers\Api\AreaController::class)->only(['index', 'show']);
