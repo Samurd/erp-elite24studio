@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Area;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Cache;
 class AreaPermissionService
 {
     /**
@@ -13,7 +13,13 @@ class AreaPermissionService
 
     public static function canArea(string $action, string $slug): bool
     {
-        $area = Area::where("slug", $slug)->with("parent")->first();
+        $areas = Cache::get('area_structure');
+
+        if (!$areas) {
+            $area = Area::where("slug", $slug)->with("parent")->first();
+        } else {
+            $area = $areas->get($slug);
+        }
 
         if (!$area) {
             return false;

@@ -238,7 +238,7 @@ services:
     image: app-migrate
     # --- CAMBIO CRÍTICO: ANULA EL ENTRYPOINT DE LA IMAGEN ---
     entrypoint: sh
-    command: -c "echo '🟡 Esperando a la DB antes de migrar...'; until php artisan db:monitor > /dev/null 2>&1; do sleep 2; done; echo '✅ DB lista, ejecutando migraciones.'; php artisan migrate --force && php artisan db:seed --force"
+    command: -c "echo '🟡 Esperando a la DB antes de migrar...'; until php artisan db:monitor > /dev/null 2>&1; do sleep 2; done; echo '✅ DB lista, ejecutando migraciones.'; php artisan migrate --force && php artisan db:seed --force && php artisan app:cache-areas"
     environment:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_NAME: ${ADMIN_NAME}

@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Area;
+use App\Services\AreaPermissionService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,14 +16,13 @@ class CheckAreaPermission
      */
     public function handle(Request $request, Closure $next, string $action, string $slug): Response
     {
-        $area = Area::where('slug', $slug)->with('parent')->firstOrFail();
+        // 1. Verificar si el usuario está autenticado
+        if (!$request->user()) {
+            abort(403, 'No tienes permiso para acceder a esta sección.');
+        }
 
-        // Construir el permiso completo: padre.subarea.accion
-        $permissionName = $area->parent
-            ? $area->parent->slug . '.' . $area->slug . '.' . $action
-            : $area->slug . '.' . $action;
-
-        if (! $request->user() || ! $request->user()->can($permissionName)) {
+        // 2. Delegar la verificación (ahora cacheada en el servicio)
+        if (!AreaPermissionService::canArea($action, $slug)) {
             abort(403, 'No tienes permiso para acceder a esta sección.');
         }
 
