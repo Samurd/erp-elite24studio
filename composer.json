@@ -28,6 +28,7 @@
         "livewire/livewire": "^3.6.4",
         "mallardduck/blade-lucide-icons": "^1.24",
         "owenvoke/blade-fontawesome": "^2.9",
+        "predis/predis": "^3.3",
         "secondnetwork/blade-tabler-icons": "^3.35",
         "spatie/laravel-permission": "^6.21",
         "themesberg/flowbite-blade-icons": "^1.2"
@@ -68,6 +69,10 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
+        ],
+        "setup:dev": [
+            "php artisan app:cache-areas",
+            "php artisan optimize:clear"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

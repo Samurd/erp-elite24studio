@@ -1,5 +1,12 @@
 services:
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - erp-elite-network
+
   # Servicio MySQL
   mysql:
     image: mysql:8.0

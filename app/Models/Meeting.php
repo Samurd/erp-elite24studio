@@ -8,7 +8,17 @@ class Meeting extends Model
 {
 
     protected $fillable = [
-        'title', 'date', 'start_time', 'end_time', 'team_id', 'status_id', 'notes', 'observations', 'goal', 'url'  
+        'title',
+        'date',
+        'start_time',
+        'end_time',
+        'team_id',
+        'status_id',
+        'notes',
+        'observations',
+        'goal',
+        'url',
+        'bookingId'
     ];
 
     protected $casts = [

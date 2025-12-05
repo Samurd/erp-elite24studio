@@ -178,21 +178,6 @@
                                         -
                                     @endif
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($meeting->url)
-                                    <a href="{{ $meeting->url }}" 
-                                       target="_blank" 
-                                       class="text-blue-600 hover:text-blue-900 text-sm"
-                                       title="Abrir URL de la reunión">
-                                        <i class="fas fa-external-link-alt mr-1"></i>
-                                        {{ Str::limit($meeting->url, 30) }}
-                                    </a>
-                                @else
-                                    <span class="text-sm text-gray-500">-</span>
-                                @endif
-                            </td>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">
                                     {{ $meeting->team ? $meeting->team->name : '-' }}
                                 </div>
@@ -236,6 +221,21 @@
                                         No
                                     </span>
                                 @endif
+                            </td>
+                            <td>
+                                @if($meeting->responsibles && $meeting->responsibles->count() > 0)
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($meeting->responsibles as $responsible)
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                                {{ $responsible->name }}
+                </span>
+            @endforeach
+        </div>
+    @else
+        <span class="text-sm text-gray-500">-</span>
+    @endif
+
+                                
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">

@@ -12,3 +12,7 @@ Route::get('/user', function (Request $request) {
 Route::middleware(['web'])->group(function () {
     Broadcast::routes();
 });
+
+Route::apiResource('users', \App\Http\Controllers\Api\UserController::class);
+Route::apiResource('meetings', \App\Http\Controllers\Api\MeetingController::class);
+Route::apiResource('areas', \App\Http\Controllers\Api\AreaController::class)->only(['index', 'show']);
