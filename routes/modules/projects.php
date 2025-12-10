@@ -15,4 +15,6 @@ Route::middleware("can-area:view,proyectos")
         Route::get("/create", Create::class)->name("create");
         Route::get("/{project}/edit", Update::class)->name("edit");
         Route::get("/{project}", Show::class)->name("show");
+
+        Route::get("/{project}/plans/{plan}/export-gantt", [App\Http\Controllers\ProjectPdfController::class, "exportGantt"])->name("plans.export-gantt");
     });

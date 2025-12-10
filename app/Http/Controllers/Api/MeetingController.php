@@ -7,6 +7,7 @@ use App\Http\Requests\StoreMeetingRequest;
 use App\Http\Requests\UpdateMeetingRequest;
 use App\Http\Resources\MeetingResource;
 use App\Models\Meeting;
+use App\Services\MeetingNotificationService;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
@@ -23,7 +24,7 @@ class MeetingController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMeetingRequest $request)
+    public function store(StoreMeetingRequest $request, MeetingNotificationService $notificationService)
     {
         $data = $request->validated();
 
@@ -36,6 +37,9 @@ class MeetingController extends Controller
         if (isset($data['responsibles'])) {
             $meeting->responsibles()->sync($data['responsibles']);
         }
+
+        // Send notifications
+        $notificationService->notifyNewMeeting($meeting);
 
         return new MeetingResource($meeting->load(['team', 'status', 'responsibles']));
     }

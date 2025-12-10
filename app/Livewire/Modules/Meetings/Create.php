@@ -8,6 +8,7 @@ use App\Models\Tag;
 use App\Models\TagCategory;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\MeetingNotificationService;
 use Livewire\WithFileUploads;
 
 class Create extends Component
@@ -75,6 +76,9 @@ class Create extends Component
             $meeting->responsibles()->attach($this->responsibles);
         }
 
+        // Send notifications
+        app(MeetingNotificationService::class)->notifyNewMeeting($meeting);
+
         session()->flash('success', 'Reunión creada exitosamente.');
 
         return redirect()->route('meetings.show', $meeting->id);
@@ -85,10 +89,10 @@ class Create extends Component
         // Get status options
         $statusCategory = TagCategory::where('slug', 'estado_reunion')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
-        
+
         // Get team options
         $teamOptions = Team::all();
-        
+
         // Get user options for responsibles
         $userOptions = User::all();
 

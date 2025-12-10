@@ -16,12 +16,25 @@ use App\Models\Policy;
 use App\Models\SocialMediaPost;
 use App\Models\PunchItem;
 use App\Models\CaseMarketing;
+use App\Models\CalendarEvent;
+use App\Models\NotificationTemplate;
+use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Index extends Component
 {
     public $events = [];
+
+    // Form properties
+    public $eventId = null;
+    public $title = '';
+    public $description = '';
+    public $start;
+    public $end;
+    public $isAllDay = false;
+    public $color = '#3b82f6';
 
     public function mount()
     {
@@ -372,7 +385,130 @@ class Index extends Component
             }
         }
 
+        // Personal Calendar Events - created by user
+        $calendarEvents = CalendarEvent::where('user_id', $userId)->get();
+
+        foreach ($calendarEvents as $event) {
+            $events[] = [
+                'id' => 'personal-' . $event->id, // Unique ID for frontend handling
+                'title' => $event->title,
+                'start' => $event->start_date->toIso8601String(),
+                'end' => $event->end_date ? $event->end_date->toIso8601String() : null,
+                'allDay' => $event->is_all_day,
+                'color' => $event->color,
+                'extendedProps' => [
+                    'type' => 'Personal',
+                    'eventId' => $event->id,
+                    'description' => $event->description ?? '',
+                    'isPersonal' => true // Flag to allow editing
+                ]
+            ];
+        }
+
         $this->events = $events;
+    }
+
+    public function saveEvent(NotificationService $notificationService)
+    {
+        $this->validate([
+            'title' => 'required|string|max:255',
+            'start' => 'required|date',
+            'end' => 'nullable|date|after_or_equal:start',
+        ]);
+
+        $event = null;
+
+        if ($this->eventId) {
+            $event = CalendarEvent::where('id', $this->eventId)->where('user_id', Auth::id())->first();
+            if ($event) {
+                $event->update([
+                    'title' => $this->title,
+                    'description' => $this->description,
+                    'start_date' => $this->start,
+                    'end_date' => $this->end,
+                    'is_all_day' => $this->isAllDay,
+                    'color' => $this->color,
+                ]);
+            }
+        } else {
+            $event = CalendarEvent::create([
+                'user_id' => Auth::id(),
+                'title' => $this->title,
+                'description' => $this->description,
+                'start_date' => $this->start,
+                'end_date' => $this->end,
+                'is_all_day' => $this->isAllDay,
+                'color' => $this->color,
+            ]);
+        }
+
+        if ($event) {
+            $this->scheduleNotification($event, $notificationService);
+        }
+
+        $this->resetForm();
+        $this->loadEvents();
+        $this->dispatch('event-saved');
+        $this->dispatch('refresh-calendar', events: $this->events);
+    }
+
+    public function deleteEvent($id)
+    {
+        $event = CalendarEvent::where('id', $id)->where('user_id', Auth::id())->first();
+        if ($event) {
+            // Delete notification template
+            NotificationTemplate::where('notifiable_type', CalendarEvent::class)
+                ->where('notifiable_id', $event->id)
+                ->delete();
+
+            $event->delete();
+            $this->loadEvents();
+            $this->dispatch('event-deleted');
+            $this->dispatch('refresh-calendar', events: $this->events);
+        }
+    }
+
+    public function updateEventDrop($id, $start, $end, NotificationService $notificationService)
+    {
+        $event = CalendarEvent::where('id', $id)->where('user_id', Auth::id())->first();
+        if ($event) {
+            $event->update([
+                'start_date' => $start,
+                'end_date' => $end,
+            ]);
+            $this->scheduleNotification($event, $notificationService);
+            // Optimistic UI: We don't reload events here to avoid lag. 
+            // The frontend updates the view immediately.
+        }
+    }
+
+    protected function scheduleNotification($event, $notificationService)
+    {
+        // Remove existing
+        NotificationTemplate::where('notifiable_type', CalendarEvent::class)
+            ->where('notifiable_id', $event->id)
+            ->delete();
+
+        // Create new scheduled notification for the start time
+        $notificationService->createScheduledTemplate(
+            user: Auth::user(),
+            title: 'Recordatorio de Evento: ' . $event->title,
+            message: $event->description ?? 'Tienes un evento programado para ahora.',
+            scheduledAt: Carbon::parse($event->start_date),
+            notifiable: $event,
+            sendEmail: true
+        );
+    }
+
+    public function resetForm()
+    {
+        $this->eventId = null;
+        $this->title = '';
+        $this->description = '';
+        $this->start = null;
+        $this->end = null;
+        $this->isAllDay = false;
+        $this->color = '#3b82f6';
     }
 
     public function render()
