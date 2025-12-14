@@ -79,7 +79,7 @@ class Index extends Component
     public function delete($id)
     {
         $policy = Policy::find($id);
-        
+
         if ($policy) {
             $policy->delete();
             session()->flash('success', 'Política eliminada exitosamente.');
@@ -98,7 +98,7 @@ class Index extends Component
         // Search by name or description
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('description', 'like', '%' . $this->search . '%');
+                ->orWhere('description', 'like', '%' . $this->search . '%');
         }
 
         // Filter by type
@@ -126,17 +126,17 @@ class Index extends Component
         }
 
         $policies = $query->orderBy('created_at', 'desc')
-                           ->paginate($this->perPage);
+            ->paginate($this->perPage);
 
         // Obtener opciones para los filtros usando TagCategory
         $typeCategory = TagCategory::where('slug', 'tipo_politica')->first();
         $typeOptions = $typeCategory ? Tag::where('category_id', $typeCategory->id)->get() : collect();
-        
+
         $statusCategory = TagCategory::where('slug', 'estado_politica')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
 
         // Obtener usuarios para asignación
-        $userOptions = User::all();
+        $userOptions = \App\Services\CommonDataCacheService::getAllUsers();
 
         return view('livewire.modules.policies.index', [
             'policies' => $policies,

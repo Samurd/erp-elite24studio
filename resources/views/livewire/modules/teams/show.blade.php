@@ -154,307 +154,60 @@
                 @if($channel)
                     <!-- Vista de canal específico -->
                     <div class="h-full flex flex-col">
-                        <!-- Header del canal -->
-                        <div class="bg-white border-b border-gray-200 px-6 py-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <a href="{{ route('teams.channels.index', $team->id) }}" wire:navigate
-                                        class="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
-                                        title="Volver a canales">
-                                        <x-lucide-arrow-left class="w-6 h-6" />
-                                    </a>
-
-                                    <div>
-                                        <h2 class="text-xl font-bold text-gray-900">{{ $channel->name }}</h2>
-                                        <p class="text-sm text-gray-600">{{ $team->name }} -
-                                            {{ $channel->is_private ? 'Canal Privado' : 'Canal Público' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Área de mensajes del canal -->
-                        <div x-data x-ref="messagesContainer"
-                            @messages-loaded.window="
-                                                                                                                                                                                                                                                                                                                                                                                                await $nextTick();
-                                                                                                                                                                                                                                                                                                                                                                                                $refs.messagesContainer.scrollTop = $refs.messagesContainer.scrollHeight;
-                                                                                                                                                                                                                                                                                                                                                                                            "
-                            @message-added.window="
-                                                                                                                                                                                                                                                                                                                                                                                                await $nextTick();
-                                                                                                                                                                                                                                                                                                                                                                                                $refs.messagesContainer.scrollTop = $refs.messagesContainer.scrollHeight;
-                                                                                                                                                                                                                                                                                                                                                                                            "
-                            class="flex-1 p-6 overflow-y-auto bg-gray-50">
-                            <div class="max-w-4xl mx-auto space-y-4">
-                                @php
-                                    // Verificar membresía del canal usando la lógica del componente
-                                    $isChannelMember = false;
-                                    if ($isMember) {
-                                        if (!$channel->is_private) {
-                                            // Canal público: todos los miembros del equipo tienen acceso
-                                            $isChannelMember = true;
-                                        } else {
-                                            // Canal privado: verificar si está en la tabla pivot
-                                            $isChannelMember = $channel->members()->where('user_id', Auth::id())->exists();
-                                        }
+                        <!-- Área de mensajes del canal (Delegada al componente) -->
+                        <div class="flex-1 overflow-hidden relative">
+                            <!-- Only render if we have access, otherwise show locked/join screen -->
+                            @php
+                                $isChannelMember = false;
+                                if ($isMember) {
+                                    if (!$channel->is_private) {
+                                        $isChannelMember = true;
+                                    } else {
+                                        $isChannelMember = $channel->members()->where('user_id', Auth::id())->exists();
                                     }
-                                @endphp
-
-                                @if(!$isMember)
-                                    <!-- Overlay para no miembros del equipo -->
-                                    <div class="flex flex-col items-center justify-center h-full py-12">
-                                        <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                                            @if($team->isPublic)
-                                                <i class="fas fa-users text-gray-400 text-2xl"></i>
-                                            @else
-                                                <i class="fas fa-lock text-gray-400 text-2xl"></i>
-                                            @endif
-                                        </div>
-
-                                        @if($team->isPublic)
-                                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Únete al equipo {{ $team->name }}</h3>
-                                            <p class="text-gray-600 mb-6 text-center max-w-md">
-                                                Este es un equipo público. Para ver los mensajes y participar en este canal, primero debes
-                                                unirte al equipo.
-                                            </p>
-                                            <button wire:click="joinTeam"
-                                                class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
-                                                <i class="fas fa-sign-in-alt mr-2"></i>
-                                                Unirse al Equipo
-                                            </button>
-                                        @else
-                                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Equipo Privado</h3>
-                                            <p class="text-gray-600 mb-6 text-center max-w-md">
-                                                Este es un equipo privado. Solo los miembros invitados pueden ver su contenido y canales.
-                                            </p>
-                                            <div class="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-lg">
-                                                <i class="fas fa-info-circle mr-2"></i> Contacta a un administrador para solicitar acceso.
-                                            </div>
-                                        @endif
-                                    </div>
-                                @elseif(!$isChannelMember)
-                                    <!-- Overlay para miembros del equipo que no están en el canal -->
-                                    <div class="flex flex-col items-center justify-center h-full py-12">
-                                        <div
-                                            class="w-16 h-16 bg-gradient-to-br {{ $channel->is_private ? 'from-gray-500 to-gray-700' : 'from-blue-500 to-blue-700' }} rounded-full flex items-center justify-center mb-4">
-                                            <i
-                                                class="fas {{ $channel->is_private ? 'fa-lock' : 'fa-hashtag' }} text-white text-2xl"></i>
-                                        </div>
-
-                                        @if($channel->is_private)
-                                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Canal Privado</h3>
-                                            <p class="text-gray-600 mb-6 text-center max-w-md">
-                                                Este es un canal privado. Solo los miembros invitados por un administrador pueden ver los
-                                                mensajes y participar.
-                                            </p>
-                                            <div class="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-lg">
-                                                <i class="fas fa-info-circle mr-2"></i> Contacta a un administrador del equipo para
-                                                solicitar
-                                                acceso.
-                                            </div>
-                                        @else
-                                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Te damos la bienvenida a
-                                                #{{ $channel->name }}
-                                            </h3>
-                                            <p class="text-gray-600 mb-6 text-center max-w-md">
-                                                Para ver el historial de mensajes y enviar los tuyos, únete a este canal público.
-                                            </p>
-                                            <button wire:click="joinChannel({{ $channel->id }})"
-                                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                <i class="fas fa-sign-in-alt mr-2"></i>
-                                                Unirse al Canal
-                                            </button>
-                                        @endif
-                                    </div>
-                                @else
-                                    <!-- Lista de mensajes (Solo para miembros) -->
-                                    @if($messages && count($messages) > 0)
-                                        @foreach($messages as $message)
-                                            @php
-                                                // Ensure we have the data we need
-                                                $userId = $message['user_id'] ?? null;
-                                                $userName = $message['user']['name'] ?? 'Unknown';
-                                                $content = $message['content'] ?? '';
-                                                $createdAt = $message['created_at'] ?? now();
-                                            @endphp
-                                            <div
-                                                class="flex items-start space-x-3 group {{ $userId == Auth::user()->id ? 'justify-end' : '' }}">
-                                                @if($userId != Auth::user()->id)
-                                                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                                        <span class="text-yellow-600 font-medium text-sm">
-                                                            {{ substr($userName, 0, 2) }}
-                                                        </span>
-                                                    </div>
-                                                @endif
-
-                                                <div class="max-w-xs lg:max-w-md">
-                                                    @if($userId != Auth::user()->id)
-                                                        <div class="flex items-center space-x-2 mb-1">
-                                                            <span class="text-xs text-gray-500">{{ $userName }}</span>
-                                                            <a href="{{ route('teams.chats', $userId) }}" wire:navigate
-                                                                class="opacity-0 group-hover:opacity-100 text-yellow-500 hover:text-yellow-600"
-                                                                title="Chat con {{ $userName }}">
-                                                                <x-lucide-message-circle class="w-3 h-3" />
-                                                            </a>
-                                                        </div>
-                                                    @endif
-
-                                                    <div
-                                                        class="{{ $userId == Auth::user()->id ? 'bg-yellow-600 text-white' : 'bg-white text-gray-900 border border-gray-200' }} rounded-lg px-4 py-2 shadow-sm">
-                                                        <p class="text-sm">{{ $content }}</p>
-
-                                                        @if(isset($message['files']) && count($message['files']) > 0)
-                                                            <div class="mt-2 space-y-1">
-                                                                @foreach($message['files'] as $file)
-                                                                    <a href="{{ $file['url'] }}" target="_blank"
-                                                                        class="flex items-center p-2 rounded-md {{ $userId == Auth::user()->id ? 'bg-yellow-700 hover:bg-yellow-800 text-white' : 'bg-gray-50 hover:bg-gray-100 text-gray-700' }} transition-colors text-xs group">
-                                                                        <x-lucide-file class="w-4 h-4 mr-2 opacity-70" />
-                                                                        <span class="truncate max-w-[150px]">{{ $file['name'] }}</span>
-                                                                        <span class="ml-2 opacity-60">{{ $file['readable_size'] }}</span>
-                                                                        <x-lucide-download
-                                                                            class="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                                    </a>
-                                                                @endforeach
-                                                            </div>
-                                                        @endif
-                                                    </div>
-
-                                                    <div
-                                                        class="text-xs text-gray-500 mt-1 flex items-center justify-{{ $userId == Auth::user()->id ? 'end' : 'start' }}">
-                                                        <span>{{ \Carbon\Carbon::parse($createdAt)->timezone('America/Bogota')->format('g:i A') }}</span>
-                                                        @if(\Carbon\Carbon::parse($createdAt)->format('Y-m-d') != now()->format('Y-m-d'))
-                                                            <span class="ml-1">{{ \Carbon\Carbon::parse($createdAt)->format('d/m/Y') }}</span>
-                                                        @endif
-
-                                                        <!-- Indicador de entrega para mensajes propios -->
-                                                        @if($userId == Auth::user()->id)
-                                                            <span class="ml-2 text-xs">
-                                                                @if(isset($message['is_sender']) && $message['is_sender'])
-                                                                    <i class="fas fa-check text-blue-500" title="Entregado"></i>
-                                                                @endif
-                                                            </span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-
-                                                @if($userId == Auth::user()->id)
-                                                    <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                                        <span class="text-white font-medium text-sm">
-                                                            {{ substr(Auth::user()->name, 0, 2) }}
-                                                        </span>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    @else
-                                        <!-- Mensaje de bienvenida al canal -->
-                                        <div class="text-center py-12">
-                                            @if($channel)
-                                                <div
-                                                    class="w-16 h-16 bg-gradient-to-br {{ $channel['is_private'] ? 'from-gray-500 to-gray-700' : 'from-blue-500 to-blue-700' }} rounded-full flex items-center justify-center mx-auto mb-4">
-                                                    <i
-                                                        class="fas {{ $channel['is_private'] ? 'fa-lock' : 'fa-hashtag' }} text-white text-2xl"></i>
-                                                </div>
-                                                <h3 class="text-xl font-semibold text-gray-900 mb-2">Bienvenido a {{ $channel['name'] }}
-                                                </h3>
-                                                @if($channel['description'])
-                                                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 max-w-md mx-auto">
-                                                        <div class="flex items-start space-x-2">
-                                                            <i class="fas fa-info-circle text-gray-500 mt-0.5"></i>
-                                                            <p class="text-sm text-gray-600 text-left">{{ $channel['description'] }}</p>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            @else
-                                                <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                    <i class="fas fa-exclamation-triangle text-gray-400 text-2xl"></i>
-                                                </div>
-                                                <h3 class="text-xl font-semibold text-gray-900 mb-2">No se encontró el canal</h3>
-                                            @endif
-                                            <p class="text-sm text-gray-500">Este es el inicio del canal. Los mensajes aparecerán aquí.
-                                            </p>
-                                        </div>
-                                    @endif
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Área de entrada de mensajes -->
-                        @php
-                            // Verificar si el usuario tiene acceso para enviar mensajes
-                            $canSendMessage = false;
-                            if ($isMember) {
-                                if (!$channel->is_private) {
-                                    // Canal público: todos los miembros del equipo pueden enviar mensajes
-                                    $canSendMessage = true;
-                                } else {
-                                    // Canal privado: verificar si está en la tabla pivot
-                                    $canSendMessage = $channel->members()->where('user_id', Auth::id())->exists();
                                 }
-                            }
-                        @endphp
+                            @endphp
 
-                        @if($canSendMessage)
-                            <div class="bg-white border-t border-gray-200 px-6 py-4">
-                                <div class="max-w-4xl mx-auto">
-                                    <form wire:submit.prevent="sendMessage" class="w-full">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                                <span class="text-yellow-600 font-medium text-sm">
-                                                    {{ substr(Auth::user()->name, 0, 2) }}
-                                                </span>
-                                            </div>
-
-
-                                            <!-- Componente de Adjuntos -->
-                                            <livewire:modules.cloud.components.chat-attachments />
-
-                                            <!-- Emoji Picker -->
-                                            <div x-data="{ showEmojiPicker: false }" class="relative">
-                                                <button type="button" @click="showEmojiPicker = !showEmojiPicker"
-                                                    class="text-gray-500 hover:text-gray-700 transition-colors p-1">
-                                                    <x-lucide-smile class="w-5 h-5" />
-                                                </button>
-
-                                                <div x-show="showEmojiPicker" @click.away="showEmojiPicker = false" x-transition
-                                                    class="absolute bottom-full right-0 mb-2 z-50 shadow-xl rounded-lg overflow-hidden"
-                                                    style="display: none;">
-                                                    <emoji-picker @emoji-click="
-                                                                            $wire.newMessage = ($wire.newMessage || '') + $event.detail.unicode;
-                                                                            showEmojiPicker = false;
-                                                                        " class="light">
-                                                    </emoji-picker>
-                                                </div>
-                                            </div>
-
-                                            <input type="text" wire:model="newMessage" wire:loading.attr="disabled"
-                                                wire:target="sendMessage" placeholder="Escribe un mensaje en {{ $channel->name }}..."
-                                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <button type="submit" wire:loading.attr="disabled" wire:target="sendMessage"
-                                                class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
-                                                :disabled="!@this.newMessage">
-                                                <span wire:loading.remove wire:target="sendMessage">
-                                                    <x-lucide-send-horizontal class="w-6 h-6" />
-                                                </span>
-                                                <span wire:loading wire:target="sendMessage">
-                                                    <svg class="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24">
-                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                            stroke-width="4"></circle>
-                                                        <path class="opacity-75" fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                        </path>
-                                                    </svg>
-                                                </span>
-                                            </button>
-                                        </div>
-                                        @error('newMessage')
-                                            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-                                        @enderror
-                                    </form>
+                            @if(!$isMember)
+                                <!-- Overlay: Not a team member -->
+                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
+                                    <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                                        <x-lucide-lock class="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Únete al equipo</h3>
+                                    <p class="text-gray-500 mt-2 mb-6 max-w-sm text-center">Debes ser miembro del equipo para ver este
+                                        canal.</p>
+                                    <button wire:click="joinTeam"
+                                        class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition">
+                                        Unirse al Equipo
+                                    </button>
                                 </div>
-                            </div>
-                        @endif
+                            @elseif(!$isChannelMember)
+                                <!-- Overlay: Not a channel member -->
+                                <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                                        <x-lucide-hash class="w-8 h-8 text-blue-500" />
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Canal #{{ $channel->name }}</h3>
+                                    <p class="text-gray-500 mt-2 mb-6 max-w-sm text-center">Únete a este canal para ver el historial y
+                                        participar.</p>
+                                    @if($channel->is_private)
+                                        <div class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
+                                            <i class="fas fa-lock mr-2"></i> Canal Privado - Requiere invitación
+                                        </div>
+                                    @else
+                                        <button wire:click="joinChannel({{ $channel->id }})"
+                                            class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
+                                            Unirse al Canal
+                                        </button>
+                                    @endif
+                                </div>
+                            @else
+                                <!-- Componente de Chat Optimizado -->
+                                <livewire:modules.teams.components.channel-chat :team="$team" :channel="$channel"
+                                    :key="'channel-chat-' . $channel->id" />
+                            @endif
+                        </div>
                     </div>
                 @else
                     <!-- Vista de Tabs -->
@@ -968,7 +721,7 @@
                                                 </label>
                                                 <input type="text" wire:model="teamName" @if(($currentUserRole['slug'] ?? '') !== 'owner') readonly @endif
                                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500
-                                                                                                                                                                                                                                                                                                                                                                        @if(($currentUserRole['slug'] ?? '') !== 'owner') bg-gray-100 cursor-not-allowed @endif"
+                                                                                                                                                                                                                                                                                                                                                                                    @if(($currentUserRole['slug'] ?? '') !== 'owner') bg-gray-100 cursor-not-allowed @endif"
                                                     placeholder="Nombre del equipo">
                                                 @error('teamName')
                                                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
@@ -981,7 +734,7 @@
                                                 </label>
                                                 <textarea wire:model="teamDescription" rows="3" @if(($currentUserRole['slug'] ?? '') !== 'owner') readonly @endif
                                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500
-                                                                                                                                                                                                                                                                                                                                                                        @if(($currentUserRole['slug'] ?? '') !== 'owner') bg-gray-100 cursor-not-allowed @endif"
+                                                                                                                                                                                                                                                                                                                                                                                    @if(($currentUserRole['slug'] ?? '') !== 'owner') bg-gray-100 cursor-not-allowed @endif"
                                                     placeholder="Descripción del equipo"></textarea>
                                                 @error('teamDescription')
                                                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
@@ -1001,7 +754,7 @@
                                                     class="peer sr-only">
                                                 <div
                                                     class="p-4 border-2 rounded-lg transition-all peer-checked:border-yellow-600 peer-checked:bg-yellow-50 hover:bg-gray-50
-                                                                                                                                                                                                                                                                                                                                                                        @if(($currentUserRole['slug'] ?? '') !== 'owner') opacity-60 cursor-not-allowed @endif">
+                                                                                                                                                                                                                                                                                                                                                                                    @if(($currentUserRole['slug'] ?? '') !== 'owner') opacity-60 cursor-not-allowed @endif">
                                                     <div class="flex items-center space-x-3 mb-2">
                                                         <div
                                                             class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -1034,7 +787,7 @@
                                                     class="peer sr-only">
                                                 <div
                                                     class="p-4 border-2 rounded-lg transition-all peer-checked:border-yellow-600 peer-checked:bg-yellow-50 hover:bg-gray-50
-                                                                                                                                                                                                                                                                                                                                                                        @if(($currentUserRole['slug'] ?? '') !== 'owner') opacity-60 cursor-not-allowed @endif">
+                                                                                                                                                                                                                                                                                                                                                                                    @if(($currentUserRole['slug'] ?? '') !== 'owner') opacity-60 cursor-not-allowed @endif">
                                                     <div class="flex items-center space-x-3 mb-2">
                                                         <div
                                                             class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">

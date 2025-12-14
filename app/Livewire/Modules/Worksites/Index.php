@@ -88,7 +88,7 @@ class Index extends Component
     public function delete($id)
     {
         $worksite = Worksite::find($id);
-        
+
         if ($worksite) {
             $worksite->delete();
             session()->flash('success', 'Obra eliminada exitosamente.');
@@ -107,7 +107,7 @@ class Index extends Component
         // Search by name or address
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('address', 'like', '%' . $this->search . '%');
+                ->orWhere('address', 'like', '%' . $this->search . '%');
         }
 
         // Filter by type
@@ -140,18 +140,18 @@ class Index extends Component
         }
 
         $worksites = $query->orderBy('created_at', 'desc')
-                           ->paginate($this->perPage);
+            ->paginate($this->perPage);
 
         // Obtener opciones para los filtros usando TagCategory
         $typeCategory = TagCategory::where('slug', 'tipo_obra')->first();
         $typeOptions = $typeCategory ? Tag::where('category_id', $typeCategory->id)->get() : collect();
-        
+
         $statusCategory = TagCategory::where('slug', 'estado_obra')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
 
         // Obtener proyectos y usuarios para filtros
-        $projects = Project::all();
-        $responsibles = User::all();
+        $projects = \App\Services\CommonDataCacheService::getAllContacts();
+        $responsibles = \App\Services\CommonDataCacheService::getAllUsers();
 
         return view('livewire.modules.worksites.index', [
             'worksites' => $worksites,

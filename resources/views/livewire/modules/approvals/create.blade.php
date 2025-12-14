@@ -50,6 +50,7 @@
                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
+                <p class="mt-1 text-xs text-gray-500">Mantén presionado Ctrl/Cmd para seleccionar múltiples</p>
                 @error('form.approvers') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
 
                 <div class="flex items-center gap-2 mt-2">

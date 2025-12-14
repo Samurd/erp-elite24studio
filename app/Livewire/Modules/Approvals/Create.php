@@ -27,15 +27,7 @@ class Create extends Component
 
     public function getUsersProperty()
     {
-        $approvalAreaPermissionIds = Permission::whereHas('area', function ($query) {
-            $query->where('slug', 'aprobaciones');
-        })->pluck('id');
-
-        return User::whereHas('roles.permissions', function ($query) use ($approvalAreaPermissionIds) {
-            $query->whereIn('permissions.id', $approvalAreaPermissionIds);
-        })
-            ->orderBy('name')
-            ->get();
+        return \App\Services\PermissionCacheService::getUsersByArea('aprobaciones');
     }
 
     public function mount()

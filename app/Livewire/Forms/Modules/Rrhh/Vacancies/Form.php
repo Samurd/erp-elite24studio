@@ -63,7 +63,7 @@ class Form extends LivewireForm
         $this->title = $vacancy->title;
         $this->area = $vacancy->area;
         $this->contract_type_id = $vacancy->contract_type_id;
-        
+
         // Manejar published_at para que siempre sea string en formato Y-m-d
         if ($vacancy->published_at) {
             if (is_string($vacancy->published_at)) {
@@ -74,7 +74,7 @@ class Form extends LivewireForm
         } else {
             $this->published_at = null;
         }
-        
+
         $this->status_id = $vacancy->status_id;
         $this->user_id = $vacancy->user_id;
         $this->description = $vacancy->description;
@@ -96,7 +96,7 @@ class Form extends LivewireForm
     public function getDefaultValues()
     {
         $this->published_at = now()->format('Y-m-d');
-        
+
 
         // Establecer el usuario actual como responsable por defecto
         $this->user_id = auth()->id();
@@ -104,15 +104,6 @@ class Form extends LivewireForm
 
     public function getRrhhUsers()
     {
-        // Obtener permisos del área RRHH
-        $rrhhPermissionIds = \App\Models\Permission::whereHas("area", function ($query) {
-            $query->where("slug", "rrhh");
-        })->pluck("id");
-
-        return \App\Models\User::whereHas("roles.permissions", function ($query) use ($rrhhPermissionIds) {
-            $query->whereIn("permissions.id", $rrhhPermissionIds);
-        })
-        ->orderBy("name")
-        ->get();
+        return \App\Services\PermissionCacheService::getUsersByArea('rrhh');
     }
 }

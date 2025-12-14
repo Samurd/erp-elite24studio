@@ -86,7 +86,7 @@ class CreateOrUpdate extends Component
     {
         logger()->info('=== INICIO SAVE CONTACT ===');
         logger()->info('isEdit: ' . ($this->isEdit ? 'true' : 'false'));
-        
+
         try {
             logger()->info('Validando datos...');
             $validateData = $this->validate($this->getRules());
@@ -101,7 +101,7 @@ class CreateOrUpdate extends Component
                 $contact = Contact::create($validateData);
                 logger()->info('Contacto creado correctamente con ID: ' . $contact->id);
             }
-            
+
             session()->flash('message', 'Contacto guardado correctamente.');
             logger()->info('=== FIN SAVE CONTACT EXITOSO ===');
 
@@ -158,7 +158,7 @@ class CreateOrUpdate extends Component
         $this->relation_types = Tag::where("category_id", $relation_type->id)->get();
         $this->states = Tag::where("category_id", $state->id)->get();
         $this->sources = Tag::where("category_id", $source->id)->get();
-        $this->users = User::get();
+        $this->users = \App\Services\CommonDataCacheService::getAllUsers();
         $this->labels = Tag::where("category_id", $label->id)->get();
     }
     public function render()

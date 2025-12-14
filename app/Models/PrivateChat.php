@@ -51,6 +51,9 @@ class PrivateChat extends Model
      */
     public function getOtherParticipant($currentUserId)
     {
+        if ($this->relationLoaded('participants')) {
+            return $this->participants->where('id', '!=', $currentUserId)->first();
+        }
         return $this->participants()->where('user_id', '!=', $currentUserId)->first();
     }
 }

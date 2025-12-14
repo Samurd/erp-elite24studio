@@ -56,7 +56,12 @@ class Index extends Component
             },
             'channels'
         ])
-            ->withCount(['members', 'channels']);
+            ->withCount([
+                'members' => function ($query) {
+                    $query->select(\Illuminate\Support\Facades\DB::raw('count(distinct users.id)'));
+                },
+                'channels'
+            ]);
 
         // Aplicar filtro de búsqueda
         if ($this->search) {

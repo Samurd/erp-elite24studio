@@ -46,10 +46,6 @@ class WeeklyChart extends Component
 
     private function loadData()
     {
-        $weeks = [];
-        $ingresos = [];
-        $gastos = [];
-
         // Calcular el rango de meses del trimestre seleccionado
         $startMonth = ($this->selectedQuarter - 1) * 3 + 1;
         $endMonth = $this->selectedQuarter * 3;
@@ -58,7 +54,26 @@ class WeeklyChart extends Component
         $startDate = \Carbon\Carbon::create($this->selectedYear, $startMonth, 1)->startOfMonth();
         $endDate = \Carbon\Carbon::create($this->selectedYear, $endMonth, 1)->endOfMonth();
 
-        // Calcular semanas del trimestre
+        // ========== OPTIMIZADO: 2 queries en lugar de ~26 ==========
+        // Obtener todos los ingresos del trimestre
+        $ingresosData = Income::whereBetween('date', [$startDate, $endDate])
+            ->selectRaw('date, amount')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->date;
+            });
+
+        // Obtener todos los gastos del trimestre
+        $gastosData = Expense::whereBetween('date', [$startDate, $endDate])
+            ->selectRaw('date, amount')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->date;
+            });
+
+        $weeks = [];
+        $ingresos = [];
+        $gastos = [];
         $weekNumber = 1;
         $currentDate = $startDate->copy();
 
@@ -72,15 +87,25 @@ class WeeklyChart extends Component
 
             $weeks[] = "Sem {$weekNumber}";
 
-            // Ingresos de la semana
-            $ingresosSemanales = Income::whereBetween('date', [$weekStart, $weekEnd])
-                ->sum('amount') / 100;
-            $ingresos[] = $ingresosSemanales;
+            // Sumar ingresos de la semana desde los datos cargados
+            $ingresosSemanales = 0;
+            foreach ($ingresosData as $date => $items) {
+                $itemDate = \Carbon\Carbon::parse($date);
+                if ($itemDate->between($weekStart, $weekEnd)) {
+                    $ingresosSemanales += $items->sum('amount');
+                }
+            }
+            $ingresos[] = $ingresosSemanales / 100;
 
-            // Gastos de la semana
-            $gastosSemanales = Expense::whereBetween('date', [$weekStart, $weekEnd])
-                ->sum('amount') / 100;
-            $gastos[] = $gastosSemanales;
+            // Sumar gastos de la semana desde los datos cargados
+            $gastosSemanales = 0;
+            foreach ($gastosData as $date => $items) {
+                $itemDate = \Carbon\Carbon::parse($date);
+                if ($itemDate->between($weekStart, $weekEnd)) {
+                    $gastosSemanales += $items->sum('amount');
+                }
+            }
+            $gastos[] = $gastosSemanales / 100;
 
             $currentDate->addDays(7);
             $weekNumber++;

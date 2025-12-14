@@ -117,7 +117,7 @@ class Index extends Component
         return view('livewire.modules.case-record.index', [
             'states' => $states,
             'case_types' => $case_types,
-            'users'    => User::all(),
+            'users' => \App\Services\CommonDataCacheService::getAllUsers(),
             'records' => $query->latest()->paginate(10),
         ]);
     }

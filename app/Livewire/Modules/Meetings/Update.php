@@ -100,12 +100,12 @@ class Update extends Component
         // Get status options
         $statusCategory = TagCategory::where('slug', 'estado_reunion')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
-        
-        // Get team options
-        $teamOptions = Team::all();
-        
-        // Get user options for responsibles
-        $userOptions = User::all();
+
+        // Get team options (cached)
+        $teamOptions = \App\Services\CommonDataCacheService::getAllTeams();
+
+        // Get user options for responsibles (cached)
+        $userOptions = \App\Services\CommonDataCacheService::getAllUsers();
 
         return view('livewire.modules.meetings.update', [
             'statusOptions' => $statusOptions,

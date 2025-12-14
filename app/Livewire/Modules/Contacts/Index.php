@@ -105,18 +105,18 @@ class Index extends Component
 
         return view('livewire.modules.contacts.index', [
             'contacts' => $query->latest()->paginate(10),
-            'states'   => $states,
-            'users'    => User::all(),
+            'states' => $states,
+            'users' => \App\Services\CommonDataCacheService::getAllUsers(),
         ]);
     }
 
-    
+
     public function openContactModal($contactId)
     {
         $this->selectedContact = Contact::find($contactId);
         $this->isInfoModalOpen = true;
     }
-    
+
     public function closeContactModal()
     {
         $this->isInfoModalOpen = false;

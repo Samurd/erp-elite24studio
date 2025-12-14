@@ -6,7 +6,16 @@ use App\Models\Area;
 use App\Models\File;
 use App\Models\Folder;
 use App\Models\Team;
+use App\Models\User;
+use App\Models\Contact;
+use App\Models\Stage;
+use App\Models\Permission;
 use App\Observers\AreaObserver;
+use App\Observers\UserObserver;
+use App\Observers\TeamObserver;
+use App\Observers\ContactObserver;
+use App\Observers\StageObserver;
+use App\Observers\PermissionObserver;
 use App\Policies\FolderPolicy;
 use App\Policies\FilePolicy;
 use App\Policies\TeamPolicy;
@@ -30,11 +39,17 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
 
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
+        // if ($this->app->environment('production')) {
+        //     URL::forceScheme('https');
+        // }
 
+        // ========== REGISTER OBSERVERS FOR CACHE INVALIDATION ==========
         Area::observe(AreaObserver::class);
+        User::observe(UserObserver::class);
+        Team::observe(TeamObserver::class);
+        Contact::observe(ContactObserver::class);
+        Stage::observe(StageObserver::class);
+        Permission::observe(PermissionObserver::class);
 
         // Registrar policies
         Gate::policy(Team::class, TeamPolicy::class);

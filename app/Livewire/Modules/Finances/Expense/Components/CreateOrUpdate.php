@@ -54,15 +54,7 @@ class CreateOrUpdate extends Component
 
     public function getUsersProperty()
     {
-        $policyAreaPermissionIds = Permission::whereHas("area", function ($query, ) {
-            $query->where("slug", "finanzas");
-        })->pluck("id");
-
-        return User::whereHas("roles.permissions", function ($query) use ($policyAreaPermissionIds, ) {
-            $query->whereIn("permissions.id", $policyAreaPermissionIds);
-        })
-            ->orderBy("name")
-            ->get();
+        return \App\Services\PermissionCacheService::getUsersByArea('finanzas');
     }
 
     public function save()

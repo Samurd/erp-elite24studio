@@ -107,6 +107,7 @@ class Chats extends Component
         }
 
         $this->selectedUser = $user;
+        $this->messageLimit = 20; // Reset limit
 
         // Obtener o crear chat con este usuario
         $this->selectedChat = Auth::user()->chatWith($userId);
@@ -118,6 +119,8 @@ class Chats extends Component
         $this->loadChats();
     }
 
+    public $messageLimit = 20;
+
     public function loadMessages()
     {
         if (!$this->selectedChat) {
@@ -126,8 +129,10 @@ class Chats extends Component
 
         $this->messages = $this->selectedChat->messages()
             ->with(['user', 'files'])
-            ->orderBy('created_at')
+            ->latest() // Get newest first
+            ->take($this->messageLimit)
             ->get()
+            ->reverse() // Reverse back to chronological order
             ->map(function ($msg) {
                 return [
                     'id' => $msg->id,
@@ -152,9 +157,21 @@ class Chats extends Component
                     })->toArray()
                 ];
             })
+            ->values() // Reset keys after reverse
             ->toArray();
 
+        // dispatch separate event if it's an initial load vs update
+        // But for now, standardizing on messagesLoaded is fine, frontend handles it.
+        // We might want dispatch 'messagesLoaded' only on initial selectUser?
+        // Let's keep it generic.
         $this->dispatch('messagesLoaded');
+    }
+
+    public function loadMore()
+    {
+        $this->messageLimit += 20;
+        $this->loadMessages();
+        $this->dispatch('oldMessagesLoaded');
     }
 
     public function updateChatAttachments($data)
@@ -162,11 +179,20 @@ class Chats extends Component
         // Receive safe array data from ChatAttachments component
         $this->chatUploads = $data['uploads'] ?? [];
         $this->chatLinkIds = $data['links'] ?? [];
+
+        $count = count($this->chatUploads) + count($this->chatLinkIds);
+        $this->dispatch('attachments-updated', count: $count);
     }
 
-    public function sendMessage(NotificationService $notificationService)
+    public function sendMessage($content = null, $tempId = null)
     {
+        $notificationService = app(NotificationService::class);
+
         try {
+            if ($content) {
+                $this->newMessage = $content;
+            }
+
             $this->validate([
                 'newMessage' => 'required|string|max:1000',
             ]);
@@ -230,7 +256,7 @@ class Chats extends Component
             ];
 
             $this->messages[] = $messageData;
-            $this->dispatch('messageAdded');
+            $this->dispatch('messageAdded', ['tempId' => $tempId, 'content' => $msg->content]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;

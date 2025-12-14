@@ -10,8 +10,8 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # --------------------------------------------------------
 echo "🟡 [Entrypoint] Esperando conexión a la Base de Datos..."
 until php artisan db:monitor > /dev/null 2>&1; do
-    echo "   ... la base de datos aún no está lista, reintentando en 2s"
-    sleep 2
+    echo "   ... la base de datos aún no está lista, reintentando en 2s"
+    sleep 2
 done
 echo "✅ [Entrypoint] Conexión a Base de Datos exitosa."
 

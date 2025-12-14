@@ -45,7 +45,7 @@ class Update extends Component
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
 
         // Get user options for assignment
-        $userOptions = User::all();
+        $userOptions = \App\Services\CommonDataCacheService::getAllUsers();
 
         return view('livewire.modules.policies.update', [
             'typeOptions' => $typeOptions,

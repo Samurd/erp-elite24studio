@@ -16,32 +16,24 @@ class Create extends Component
     public function save()
     {
         $this->form->store();
-        
+
         return redirect()->route('rrhh.interviews.index');
     }
-    
+
     public function render()
     {
         // Obtener opciones para los filtros usando TagCategory
         $statusCategory = TagCategory::where('slug', 'estado_entrevista')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
-        
+
         $interviewTypeCategory = TagCategory::where('slug', 'tipo_entrevista')->first();
         $interviewTypeOptions = $interviewTypeCategory ? Tag::where('category_id', $interviewTypeCategory->id)->get() : collect();
-        
+
         $resultCategory = TagCategory::where('slug', 'resultado_entrevista')->first();
         $resultOptions = $resultCategory ? Tag::where('category_id', $resultCategory->id)->get() : collect();
-        
-        // Obtener usuarios con permiso al área de RRHH
-        $rrhhPermissionIds = \App\Models\Permission::whereHas("area", function ($query) {
-            $query->where("slug", "rrhh");
-        })->pluck("id");
 
-        $interviewerOptions = \App\Models\User::whereHas("roles.permissions", function ($query) use ($rrhhPermissionIds) {
-            $query->whereIn("permissions.id", $rrhhPermissionIds);
-        })
-        ->orderBy("name")
-        ->get();
+        // Obtener usuarios con permiso al área de RRHH
+        $interviewerOptions = \App\Services\PermissionCacheService::getUsersByArea('rrhh');
 
         $applicants = Applicant::orderBy('full_name')->get();
 

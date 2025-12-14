@@ -30,6 +30,7 @@ COPY composer.json composer.lock package.json package-lock.json ./
 RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader
 
 # Instalar dependencias de Node.js
+RUN npm config set network-timeout 600000
 RUN npm ci
 
 # Copiar resto del código fuente

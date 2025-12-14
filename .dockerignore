@@ -1,7 +1,5 @@
 .git
-.env
-.env.example
-.env.dokploy
+.env*
 docker-compose.yml
 docker-compose.prod.yml
 node_modules

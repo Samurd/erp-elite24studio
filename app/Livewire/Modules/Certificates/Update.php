@@ -50,15 +50,7 @@ class Update extends Component
 
     public function getUsersProperty()
     {
-        $policyAreaPermissionIds = Permission::whereHas('area', function ($query) {
-            $query->where('slug', 'certificados');
-        })->pluck('id');
-
-        return User::whereHas('roles.permissions', function ($query) use ($policyAreaPermissionIds) {
-            $query->whereIn('permissions.id', $policyAreaPermissionIds);
-        })
-            ->orderBy('name')
-            ->get();
+        return \App\Services\PermissionCacheService::getUsersByArea('certificados');
     }
 
 

@@ -31,23 +31,28 @@ class MonthlyChart extends Component
 
     private function loadData()
     {
+        // ========== OPTIMIZADO: 2 queries en lugar de 24 ==========
+        // Obtener todos los ingresos del año agrupados por mes
+        $ingresosData = Income::whereYear('date', $this->selectedYear)
+            ->selectRaw('MONTH(date) as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month');
+
+        // Obtener todos los gastos del año agrupados por mes
+        $gastosData = Expense::whereYear('date', $this->selectedYear)
+            ->selectRaw('MONTH(date) as month, SUM(amount) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month');
+
         $months = [];
         $ingresos = [];
         $gastos = [];
 
-        // Generar datos para los 12 meses del año seleccionado
+        // Generar datos para los 12 meses
         for ($month = 1; $month <= 12; $month++) {
             $months[] = \Carbon\Carbon::create($this->selectedYear, $month, 1)->translatedFormat('M');
-
-            // Ingresos del mes
-            $ingresos[] = Income::whereYear('date', $this->selectedYear)
-                ->whereMonth('date', $month)
-                ->sum('amount') / 100;
-
-            // Gastos del mes
-            $gastos[] = Expense::whereYear('date', $this->selectedYear)
-                ->whereMonth('date', $month)
-                ->sum('amount') / 100;
+            $ingresos[] = ($ingresosData->get($month, 0)) / 100;
+            $gastos[] = ($gastosData->get($month, 0)) / 100;
         }
 
         $this->monthlyData = [

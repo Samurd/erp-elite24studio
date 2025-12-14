@@ -97,7 +97,7 @@ class Index extends Component
     public function delete($id)
     {
         $project = Project::find($id);
-        
+
         if ($project) {
             $project->delete();
             session()->flash('success', 'Proyecto eliminado exitosamente.');
@@ -117,8 +117,8 @@ class Index extends Component
         // Search by name, description, or direction
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('description', 'like', '%' . $this->search . '%')
-                  ->orWhere('direction', 'like', '%' . $this->search . '%');
+                ->orWhere('description', 'like', '%' . $this->search . '%')
+                ->orWhere('direction', 'like', '%' . $this->search . '%');
         }
 
         // Filter by status
@@ -156,23 +156,23 @@ class Index extends Component
         }
 
         $projects = $query->orderBy('created_at', 'desc')
-                           ->paginate($this->perPage);
+            ->paginate($this->perPage);
 
         // Obtener opciones para los filtros usando TagCategory
         $statusCategory = TagCategory::where('slug', 'estado_proyecto')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
-        
+
         $projectTypeCategory = TagCategory::where('slug', 'tipo_proyecto')->first();
         $projectTypeOptions = $projectTypeCategory ? Tag::where('category_id', $projectTypeCategory->id)->get() : collect();
 
-        // Obtener contactos
-        $contactOptions = Contact::all();
+        // Obtener contactos (cached)
+        $contactOptions = \App\Services\CommonDataCacheService::getAllContacts();
 
-        // Obtener usuarios responsables
-        $responsibleOptions = User::all();
+        // Obtener usuarios responsables (cached)
+        $responsibleOptions = \App\Services\CommonDataCacheService::getAllUsers();
 
-        // Obtener etapas
-        $stageOptions = Stage::all();
+        // Obtener etapas (cached)
+        $stageOptions = \App\Services\CommonDataCacheService::getAllStages();
 
         return view('livewire.modules.projects.index', [
             'projects' => $projects,

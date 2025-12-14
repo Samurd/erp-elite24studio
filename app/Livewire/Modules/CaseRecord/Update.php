@@ -32,11 +32,12 @@ class Update extends Component
         $state_type = TagCategory::where("slug", "estado_caso")->first();
         $case_type = TagCategory::where("slug", "tipo_caso")->first();
 
-        $this->contacts = Contact::all();
+        $this->contacts = \App\Services\CommonDataCacheService::getAllContacts();
         $this->case_types = Tag::where("category_id", $case_type->id)->get();
         $this->states = Tag::where("category_id", $state_type->id)->get();
 
-        $this->users = User::all();
+        // Obtener usuarios (cached)
+        $this->users = \App\Services\CommonDataCacheService::getAllUsers();
         $this->defaultUserId = Auth::user()->id;
     }
 

@@ -37,7 +37,7 @@ class CreateOrUpdate extends Component
         $this->form->clearValidation();
 
         // Refresh teams list
-        $this->teams = Team::all();
+        $this->teams = \App\Services\CommonDataCacheService::getAllTeams();
 
         $plan = Plan::find($planId);
         $this->form->setPlan($plan);

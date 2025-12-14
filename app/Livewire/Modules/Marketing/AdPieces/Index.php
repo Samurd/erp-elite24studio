@@ -170,7 +170,7 @@ class Index extends Component
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
 
         $projects = Project::all();
-        $teams = Team::all();
+        $teams = \App\Services\CommonDataCacheService::getAllTeams();
         $strategies = Strategy::all();
 
         return view('livewire.modules.marketing.ad-pieces.index', [

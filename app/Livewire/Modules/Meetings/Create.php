@@ -90,11 +90,11 @@ class Create extends Component
         $statusCategory = TagCategory::where('slug', 'estado_reunion')->first();
         $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
 
-        // Get team options
-        $teamOptions = Team::all();
+        // Get team options (cached)
+        $teamOptions = \App\Services\CommonDataCacheService::getAllTeams();
 
-        // Get user options for responsibles
-        $userOptions = User::all();
+        // Get user options for responsibles (cached)
+        $userOptions = \App\Services\CommonDataCacheService::getAllUsers();
 
         return view('livewire.modules.meetings.create', [
             'statusOptions' => $statusOptions,
