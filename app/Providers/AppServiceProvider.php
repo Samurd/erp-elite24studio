@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
 
         Blade::directive('canArea', function ($expression) {
             // $expression será algo como: "create, 'ingresos'"
-            return "<?php if(auth()->check() && app(\App\Services\AreaPermissionService::class)->canArea($expression)): ?>";
+            return "<?php if(app(\App\Services\AreaPermissionService::class)->canArea($expression)): ?>";
         });
 
         Blade::directive('endCanArea', function () {

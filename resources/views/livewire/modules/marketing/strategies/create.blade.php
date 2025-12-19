@@ -12,7 +12,7 @@
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('marketing.strategies.index') }}"
-                   class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>Volver
                 </a>
             </div>
@@ -25,10 +25,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Nombre -->
                 <div class="lg:col-span-2">
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Estrategia *</label>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Estrategia
+                        *</label>
                     <input type="text" id="name" wire:model="form.name"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                           placeholder="Ej: Campaña de Verano 2024">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Ej: Campaña de Verano 2024">
                     @error('form.name')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -38,7 +39,7 @@
                 <div>
                     <label for="status_id" class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                     <select id="status_id" wire:model="form.status_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                         <option value="">Seleccionar estado</option>
                         @foreach($statusOptions as $status)
                             <option value="{{ $status->id }}">{{ $status->name }}</option>
@@ -53,10 +54,11 @@
             <!-- Objetivo -->
             <div class="grid grid-cols-1 gap-6 mt-6">
                 <div>
-                    <label for="objective" class="block text-sm font-medium text-gray-700 mb-2">Objetivo Principal</label>
+                    <label for="objective" class="block text-sm font-medium text-gray-700 mb-2">Objetivo
+                        Principal</label>
                     <textarea id="objective" wire:model="form.objective" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                              placeholder="Describir el objetivo principal de la estrategia..."></textarea>
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Describir el objetivo principal de la estrategia..."></textarea>
                     @error('form.objective')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -69,7 +71,7 @@
                 <div>
                     <label for="start_date" class="block text-sm font-medium text-gray-700 mb-2">Fecha de Inicio</label>
                     <input type="date" id="start_date" wire:model="form.start_date"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                     @error('form.start_date')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -79,7 +81,7 @@
                 <div>
                     <label for="end_date" class="block text-sm font-medium text-gray-700 mb-2">Fecha de Fin</label>
                     <input type="date" id="end_date" wire:model="form.end_date"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                     @error('form.end_date')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -89,7 +91,7 @@
                 <div>
                     <label for="responsible_id" class="block text-sm font-medium text-gray-700 mb-2">Responsable</label>
                     <select id="responsible_id" wire:model="form.responsible_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                         <option value="">Seleccionar responsable</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -105,10 +107,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <!-- Público Objetivo -->
                 <div>
-                    <label for="target_audience" class="block text-sm font-medium text-gray-700 mb-2">Público Objetivo</label>
+                    <label for="target_audience" class="block text-sm font-medium text-gray-700 mb-2">Público
+                        Objetivo</label>
                     <input type="text" id="target_audience" wire:model="form.target_audience"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                           placeholder="Ej: Jóvenes 18-25 años, interés en tecnología">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Ej: Jóvenes 18-25 años, interés en tecnología">
                     @error('form.target_audience')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -118,8 +121,8 @@
                 <div>
                     <label for="platforms" class="block text-sm font-medium text-gray-700 mb-2">Plataformas</label>
                     <input type="text" id="platforms" wire:model="form.platforms"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                           placeholder="Ej: Facebook, Instagram, LinkedIn, TikTok">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Ej: Facebook, Instagram, LinkedIn, TikTok">
                     @error('form.platforms')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -134,12 +137,12 @@
                     <div class="space-y-3">
                         <label class="flex items-center">
                             <input type="checkbox" wire:model="form.notify_team"
-                                   class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded">
+                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Notificar al equipo sobre esta estrategia</span>
                         </label>
                         <label class="flex items-center">
                             <input type="checkbox" wire:model="form.add_to_calendar"
-                                   class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded">
+                                class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded">
                             <span class="ml-2 text-sm text-gray-700">Agregar al calendario del equipo</span>
                         </label>
                     </div>
@@ -151,16 +154,31 @@
                 <div>
                     <label for="observations" class="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
                     <textarea id="observations" wire:model="form.observations" rows="4"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                              placeholder="Notas adicionales, comentarios importantes, etc..."></textarea>
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Notas adicionales, comentarios importantes, etc..."></textarea>
                     @error('form.observations')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
             </div>
 
+
+            @if(isset($strategy))
+                @livewire('modules.cloud.components.model-attachments', [
+                    'model' => $strategy,
+                    'area' => 'marketing'
+                ])
+            @else
+                @livewire('modules.cloud.components.model-attachments-creator', [
+                    'modelClass' => \App\Models\Strategy::class,
+                    'areaSlug' => 'marketing'
+                ])
+            @endif
+
+ 
+
             <!-- Botones de Acción -->
-            <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
+        <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
                 <a href="{{ route('marketing.strategies.index') }}"
                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-times mr-2"></i>Cancelar
@@ -168,9 +186,9 @@
                 <button type="submit"
                         class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
                     <i class="fas fa-save mr-2"></i>{{ isset($strategy) ? 'Actualizar' : 'Guardar' }} Estrategia
-                </button>
-            </div>
-        </form>
+            </button>
+        </div>
+    </form>
     </div>
 
     @if (session()->has('success'))

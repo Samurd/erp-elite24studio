@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Project;
 use App\Models\Tag;
 use App\Models\User;
-use App\Models\File;
 
 class SocialMediaPost extends Model
 {
@@ -21,6 +20,7 @@ class SocialMediaPost extends Model
         'scheduled_date',
         'project_id',
         'responsible_id',
+        'status_id',
         'comments',
     ];
 

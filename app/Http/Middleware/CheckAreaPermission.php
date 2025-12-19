@@ -17,9 +17,9 @@ class CheckAreaPermission
     public function handle(Request $request, Closure $next, string $action, string $slug): Response
     {
         // 1. Verificar si el usuario está autenticado
-        if (!$request->user()) {
-            abort(403, 'No tienes permiso para acceder a esta sección.');
-        }
+        // if (!$request->user()) {
+        //     abort(403, 'No tienes permiso para acceder a esta sección.');
+        // }
 
         // 2. Delegar la verificación (ahora cacheada en el servicio)
         if (!AreaPermissionService::canArea($action, $slug)) {

@@ -33,16 +33,16 @@ class Form extends LivewireForm
     {
         $this->validate();
 
-        Event::create($this->all());
+        $event = Event::create($this->all());
 
-        $this->reset();
+        return $event;
     }
 
     public function setEvent(Event $event)
     {
         $this->name = $event->name;
         $this->type_id = $event->type_id;
-        $this->event_date = $event->event_date->format('Y-m-d');
+        $this->event_date = $event->event_date?->format('Y-m-d');
         $this->location = $event->location;
         $this->status_id = $event->status_id;
         $this->responsible_id = $event->responsible_id;

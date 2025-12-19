@@ -12,12 +12,13 @@ Route::get("/", function () {
     return redirect()->route("dashboard");
 });
 
+Route::get('/inertia-test', [\App\Http\Controllers\InertiaTestController::class, 'show']);
+
 // Ruta pública para compartir
 Route::get("/share/{token}/{folder?}", PublicShareIndex::class)->name(
     "public.share",
 );
 
-use App\Livewire\Modules\Dashboard\Index as DashboardIndex;
 
 Route::middleware([
     "auth:sanctum",
@@ -28,7 +29,7 @@ Route::middleware([
     Route::get('/files/{file}/download', [FileController::class, 'download'])->name('files.download');
     Route::get('/files/{file}/view', [FileController::class, 'stream'])->name('files.view');
 
-    Route::get("/dashboard", DashboardIndex::class)->name("dashboard");
+    Route::get("/dashboard", [\App\Http\Controllers\DashboardController::class, 'index'])->name("dashboard");
 
     Route::get("/auth/{provider}", [OauthController::class, "redirect"])->name(
         "oauth.redirect",
@@ -71,6 +72,8 @@ Route::middleware([
     require __DIR__ . "/modules/meetings.php";
     require __DIR__ . "/modules/notifications.php";
 
+    // Profile (Jetstream Inertia)
+    Route::get('/user/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
 
     Route::get("/settings", Index::class)->name("settings.index");
 
@@ -78,11 +81,19 @@ Route::middleware([
         "users.index",
     );
 
-    Route::get("/users/create", CreateOrUpdate::class)->name("users.create");
+    Route::get("/users/create", [UsersController::class, "create"])->name("users.create");
+    Route::get("/users/{user}/edit", [UsersController::class, "edit"])->name("users.edit");
+    Route::put("/users/{user}", [UsersController::class, "update"])->name("users.update");
 
-    Route::get("/users/{user}/edit", CreateOrUpdate::class)->name("users.edit");
+    // Role/Permission API Routes for Users Form
+    Route::post("/users/roles", [UsersController::class, "storeRole"])->name("users.roles.store");
+    Route::put("/users/roles/{role}", [UsersController::class, "updateRole"])->name("users.roles.update");
+    Route::get("/users/roles/{role}", [UsersController::class, "getRole"])->name("users.roles.get");
+    Route::get("/users/permissions", [UsersController::class, "getAllPermissions"])->name("users.permissions.index");
+    Route::post("/users/permissions", [UsersController::class, "storePermission"])->name("users.permissions.store");
 
     Route::post("/users", [UsersController::class, "store"])->name(
         "users.store",
     );
+    Route::delete("/users/{user}", [UsersController::class, "destroy"])->name("users.destroy");
 });

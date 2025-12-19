@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\HasFiles;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Tag;
 use App\Models\User;
 
 class Event extends Model
 {
+
+    use HasFiles;
+
     protected $fillable = [
         'name',
         'type_id',
@@ -17,7 +21,7 @@ class Event extends Model
         'responsible_id',
         'observations',
     ];
-    
+
     protected $casts = [
         'event_date' => 'date',
     ];
@@ -26,7 +30,7 @@ class Event extends Model
     {
         return $this->hasMany(EventItem::class);
     }
-    
+
 
     public function type()
     {

@@ -82,9 +82,7 @@ RUN composer dump-autoload --optimize
 COPY --from=build /app/public/build /var/www/html/public/build
 
 # ------------------------------------------------------------------------------
-# ✔ PUBLICAR ASSETS DE LIVEWIRE (CRÍTICO PARA PRODUCCIÓN)
-# ------------------------------------------------------------------------------
-RUN php artisan livewire:publish --assets
+
 
 # ------------------------------------------------------------------------------
 # ✔ OPTIMIZACIÓN: Solo asignar permisos a carpetas de escritura

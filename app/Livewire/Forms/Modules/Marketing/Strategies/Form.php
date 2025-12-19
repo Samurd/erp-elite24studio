@@ -45,7 +45,7 @@ class Form extends LivewireForm
     {
         $this->validate();
 
-        Strategy::create([
+        $strat = Strategy::create([
             'name' => $this->name,
             'objective' => $this->objective,
             'status_id' => $this->status_id,
@@ -59,7 +59,22 @@ class Form extends LivewireForm
             'observations' => $this->observations,
         ]);
 
-        $this->reset();
+        if ($this->notify_team) {
+            $users = \App\Services\PermissionCacheService::getUsersByArea('marketing');
+            $notificationService = app(\App\Services\NotificationService::class);
+
+            foreach ($users as $user) {
+                $notificationService->createImmediate(
+                    user: $user,
+                    title: 'Nueva Estrategia de Marketing',
+                    message: "Se ha creado la estrategia: {$this->name}",
+                    notifiable: $strat,
+                    sendEmail: true
+                );
+            }
+        }
+
+        return $strat;
     }
 
     public function update(Strategy $strategy)
@@ -79,6 +94,21 @@ class Form extends LivewireForm
             'add_to_calendar' => $this->add_to_calendar,
             'observations' => $this->observations,
         ]);
+
+        if ($this->notify_team) {
+            $users = \App\Services\PermissionCacheService::getUsersByArea('marketing');
+            $notificationService = app(\App\Services\NotificationService::class);
+
+            foreach ($users as $user) {
+                $notificationService->createImmediate(
+                    user: $user,
+                    title: 'Estrategia de Marketing Actualizada',
+                    message: "Se ha actualizado la estrategia: {$this->name}",
+                    notifiable: $strategy,
+                    sendEmail: true
+                );
+            }
+        }
     }
 
     public function setStrategy(Strategy $strategy)

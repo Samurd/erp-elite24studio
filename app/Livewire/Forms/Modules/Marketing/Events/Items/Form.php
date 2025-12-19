@@ -30,9 +30,9 @@ class Form extends LivewireForm
     {
         $this->validate();
 
-        EventItem::create($this->all());
+        $item = EventItem::create($this->all());
 
-        $this->reset();
+        return $item;
     }
 
     public function setEventItem(EventItem $eventItem)

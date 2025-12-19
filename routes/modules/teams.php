@@ -14,7 +14,10 @@ Route::middleware('can-area:view,teams')
     ->group(function () {
         Route::get('/', Index::class)->name('index');
         Route::get('/create', Create::class)->name('create');
-        Route::get('/chats/{userId?}', Chats::class)->name('chats');
+        // Route::get('/chats/{userId?}', Chats::class)->name('chats'); // Old Livewire
+        Route::get('/chats/{userId?}', [\App\Http\Controllers\Teams\TeamsChatsController::class, 'index'])->name('chats');
+        Route::post('/chats', [\App\Http\Controllers\Teams\TeamsChatsController::class, 'store'])->name('chats.store');
+        Route::get('/chats/{chatId}/messages', [\App\Http\Controllers\Teams\TeamsChatsController::class, 'loadMore'])->name('chats.load-more');
         Route::get('/{team}', Show::class)->name('show');
         Route::get('/{team}/channels', Show::class)->name('channels.index');
         Route::get('/{team}/channels/{channel}', Show::class)->name('channels.show')->where('channel', '[0-9]+');

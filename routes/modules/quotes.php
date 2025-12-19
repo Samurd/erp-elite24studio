@@ -1,15 +1,16 @@
 <?php
 
-use App\Livewire\Modules\Quotes\Create;
-use App\Livewire\Modules\Quotes\Index;
-use App\Livewire\Modules\Quotes\Update;
+use App\Http\Controllers\QuotesController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware("can-area:view,cotizaciones")
     ->prefix("quotes")
     ->name("quotes.")
     ->group(function () {
-        Route::get("/", Index::class)->name("index");
-        Route::get("/create", Create::class)->name("create");
-        Route::get("/{quote}/edit", Update::class)->name("edit");
+        Route::get("/", [QuotesController::class, 'index'])->name("index");
+        Route::get("/create", [QuotesController::class, 'create'])->name("create");
+        Route::post("/", [QuotesController::class, 'store'])->name("store");
+        Route::get("/{quote}/edit", [QuotesController::class, 'edit'])->name("edit");
+        Route::put("/{quote}", [QuotesController::class, 'update'])->name("update");
+        Route::delete("/{quote}", [QuotesController::class, 'destroy'])->name("destroy");
     });

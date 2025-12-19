@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('calendar')->name('calendar.')->group(function () {
-    Route::get('/', Index::class)->name('index');
-    // Route::get('/create', Create::class)->name('create');
-    // Route::get('/{caseRecord}/edit', Update::class)->name('edit');
+    Route::get('/', [\App\Http\Controllers\CalendarController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\CalendarController::class, 'store'])->name('store');
+    Route::put('/{calendarEvent}', [\App\Http\Controllers\CalendarController::class, 'update'])->name('update');
+    Route::delete('/{calendarEvent}', [\App\Http\Controllers\CalendarController::class, 'destroy'])->name('destroy');
 });

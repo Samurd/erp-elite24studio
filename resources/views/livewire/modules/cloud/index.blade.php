@@ -15,7 +15,7 @@
     @drop.prevent="dropping = false; $refs.fileInput.click()">
 
     {{-- Componente Modal Compartir (Global) --}}
-    @livewire('modules.cloud.components.share-dialog')
+    <!-- @livewire('modules.cloud.components.share-dialog') -->
 
     {{-- Notificaciones Flotantes --}}
     <div class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
@@ -63,7 +63,7 @@
                 <span class="text-gray-600">/</span>
                 <button wire:click="openFolder({{ $crumb->id }})"
                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
-                            {{ $loop->last ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                {{ $loop->last ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                     <span class="truncate max-w-[150px]">{{ $crumb->name }}</span>
                 </button>
             @endforeach

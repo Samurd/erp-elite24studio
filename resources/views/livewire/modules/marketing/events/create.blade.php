@@ -114,6 +114,19 @@
                 </div>
             </div>
 
+
+            @if(isset($event))
+                @livewire('modules.cloud.components.model-attachments', [
+                    'model' => $event,
+                    'area' => 'marketing'
+                ])
+            @else
+                @livewire('modules.cloud.components.model-attachments-creator', [
+                    'modelClass' => \App\Models\Event::class,
+                    'areaSlug' => 'marketing'
+                ])
+            @endif
+
             <!-- Botones de Acción -->
             <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
                 <a href="{{ route('marketing.events.index') }}"

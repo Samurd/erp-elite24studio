@@ -8,11 +8,11 @@
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('marketing.events.index') }}"
-                   class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>Volver
                 </a>
                 <a href="{{ route('marketing.events.edit', $event) }}"
-                   class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                    class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
                     <i class="fas fa-edit mr-2"></i>Editar
                 </a>
             </div>
@@ -67,6 +67,9 @@
                 <p class="text-gray-800">{{ $event->observations }}</p>
             </div>
         @endif
+
+        <!-- Files Section -->
+        <livewire:modules.cloud.components.model-files :model="$event" />
     </div>
 
     <!-- Event Items -->
@@ -74,7 +77,7 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-800">Ítems del Evento</h2>
             <a href="{{ route('marketing.events.items.create', $event->id) }}"
-               class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-plus mr-2"></i>Agregar Ítem
             </a>
         </div>
@@ -83,16 +86,14 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <!-- Search -->
             <div>
-                <input type="text" 
-                       wire:model.live.debounce.300ms="search"
-                       placeholder="Buscar por descripción..."
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Buscar por descripción..."
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
             </div>
 
             <!-- Unit Filter -->
             <div>
                 <select wire:model.live="unitFilter"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                     <option value="">Todas las unidades</option>
                     @foreach($unitOptions as $unit)
                         <option value="{{ $unit->id }}">{{ $unit->name }}</option>
@@ -103,7 +104,7 @@
             <!-- Per Page -->
             <div>
                 <select wire:model.live="perPage"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                     <option value="10">10 por página</option>
                     <option value="25">25 por página</option>
                     <option value="50">50 por página</option>
@@ -157,12 +158,12 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('marketing.events.items.edit', [$event->id, $item->id]) }}"
-                                   class="text-yellow-600 hover:text-yellow-900 mr-3" title="Editar">
+                                    class="text-yellow-600 hover:text-yellow-900 mr-3" title="Editar">
                                     Editar
                                 </a>
                                 <button wire:click="delete({{ $item->id }})"
-                                        wire:confirm="¿Estás seguro de que quieres eliminar este ítem?"
-                                        class="text-red-600 hover:text-red-900" title="Eliminar">
+                                    wire:confirm="¿Estás seguro de que quieres eliminar este ítem?"
+                                    class="text-red-600 hover:text-red-900" title="Eliminar">
                                     Eliminar
                                 </button>
                             </td>

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasFiles;
 use Illuminate\Database\Eloquent\Model;
 
 class EventItem extends Model
 {
+    use HasFiles;
+
     protected $fillable = [
         'event_id',
         'description',

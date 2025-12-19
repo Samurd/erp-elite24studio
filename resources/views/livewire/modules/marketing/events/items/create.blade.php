@@ -12,7 +12,7 @@
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('marketing.events.show', $event->id) }}"
-                   class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>Volver al Evento
                 </a>
             </div>
@@ -27,8 +27,8 @@
                 <div class="lg:col-span-2">
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
                     <input type="text" id="description" wire:model="form.description"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                           placeholder="Descripción del ítem">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Descripción del ítem">
                     @error('form.description')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -38,7 +38,7 @@
                 <div>
                     <label for="unit_id" class="block text-sm font-medium text-gray-700 mb-2">Unidad</label>
                     <select id="unit_id" wire:model="form.unit_id"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500">
                         <option value="">Seleccionar unidad</option>
                         @foreach($unitOptions as $unit)
                             <option value="{{ $unit->id }}">{{ $unit->name }}</option>
@@ -53,8 +53,8 @@
                 <div>
                     <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
                     <input type="number" id="quantity" wire:model="form.quantity" step="0.01" min="0"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                           placeholder="0.00">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="0">
                     @error('form.quantity')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -63,11 +63,7 @@
                 <!-- Precio Unitario -->
                 <div>
                     <label for="unit_price" class="block text-sm font-medium text-gray-700 mb-2">Precio Unitario</label>
-                    <x-money-input 
-                        model="form.unit_price" 
-                        label="" 
-                        placeholder="0.00"
-                    />
+                    <x-money-input model="form.unit_price" label="" placeholder="0.00" />
                     @error('form.unit_price')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -76,20 +72,30 @@
                 <!-- Precio Total -->
                 <div>
                     <label for="total_price" class="block text-sm font-medium text-gray-700 mb-2">Precio Total</label>
-                    <x-money-input 
-                        model="form.total_price" 
-                        label="" 
-                        placeholder="0.00"
-                        readonly="false"
-                    />
+                    <x-money-input model="form.total_price" label="" placeholder="0.00" />
                     @error('form.total_price')
                         <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
-            </div>
+
+
+                <div class="lg:col-span-2">
+                    @if(isset($eventItem))
+                    @livewire('modules.cloud.components.model-attachments', [
+                        'model' => $eventItem,
+                        'area' => 'marketing'
+                    ])
+                @else
+                @livewire('modules.cloud.components.model-attachments-creator', [
+                    'modelClass' => \App\Models\EventItem::class,
+                    'areaSlug' => 'marketing'
+                ])
+                @endif
+                </div>
+             </div>
 
             <!-- Botones de Acción -->
-            <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
+        <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
                 <a href="{{ route('marketing.events.show', $event->id) }}"
                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-times mr-2"></i>Cancelar
@@ -97,9 +103,9 @@
                 <button type="submit"
                         class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
                     <i class="fas fa-save mr-2"></i>{{ isset($eventItem) ? 'Actualizar' : 'Guardar' }} Ítem
-                </button>
-            </div>
-        </form>
+            </button>
+        </div>
+    </form>
     </div>
 
     @if (session()->has('success'))

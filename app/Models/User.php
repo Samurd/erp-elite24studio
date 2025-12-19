@@ -22,6 +22,21 @@ class User extends Authenticatable
     use TwoFactorAuthenticatable;
 
     /**
+     * Get the URL to the user's profile photo.
+     */
+    public function profilePhotoUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::get(function () {
+            return $this->profile_photo_path
+                ? \Illuminate\Support\Facades\Storage::disk($this->profilePhotoDisk())->temporaryUrl(
+                    $this->profile_photo_path,
+                    now()->addMinutes(60)
+                )
+                : $this->defaultProfilePhotoUrl();
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

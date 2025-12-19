@@ -100,7 +100,7 @@ class FileSelectorModal extends Component
         // CASO B: MODO CREACIÓN (ID es null) -> Emitir evento al padre
         if (!$this->contextId) {
             \Illuminate\Support\Facades\Log::info('FileSelectorModal: Creation Mode');
-            $this->dispatch('file-selected-for-creation', $file->id);
+            $this->dispatch('file-selected-for-creation', fileId: $file->id, file: $file, contextType: $this->contextType);
             $this->dispatch('notify', 'Archivo seleccionado para vincular');
         }
         // CASO A: MODO EDICIÓN (Tenemos ID) -> Vincular directo en BD

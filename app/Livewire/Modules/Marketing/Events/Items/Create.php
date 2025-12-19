@@ -10,6 +10,13 @@ use Livewire\Component;
 
 class Create extends Component
 {
+
+    protected $listeners = [
+        // 1. ESCUCHAR AL HIJO: Cuando termine de subir los archivos
+        'attachments-committed' => 'finishCreation'
+    ];
+
+
     public Form $form;
     public Event $event;
 
@@ -21,11 +28,26 @@ class Create extends Component
 
     public function save()
     {
-        $this->form->store();
-        
+        $item = $this->form->store();
+
+        $this->dispatch('commit-attachments', [
+            'id' => $item->id,
+            'name' => $item->description
+        ]);
+    }
+
+    /**
+     * Este método se ejecuta automáticamente cuando el hijo termina
+     */
+    public function finishCreation()
+    {
+        // 4. Ahora sí, redirigimos o mostramos éxito
+        session()->flash('success', 'Registro creado y archivos adjuntados correctamente.');
+
         return redirect()->route('marketing.events.show', $this->event->id);
     }
-    
+
+
     public function render()
     {
         // Obtener opciones para las unidades usando TagCategory

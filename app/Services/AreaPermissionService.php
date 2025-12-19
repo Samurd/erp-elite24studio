@@ -8,18 +8,34 @@ use Illuminate\Support\Facades\Cache;
 class AreaPermissionService
 {
     /**
-     * Create a new class instance.
+     * Request-level cache for areas.
      */
+    protected static $areas;
 
+    /**
+     * Check if the user has permission to view a specific area.
+     */
     public static function canArea(string $action, string $slug): bool
     {
-        $areas = Cache::get('area_structure');
+        // 1. Load all areas once per request (Memoization)
+        if (self::$areas === null) {
+            // Check persistent cache first (optional, but good if 'area_structure' is reliable)
+            // If reliability is unknown, it's safer to just query DB once per request:
+            // self::$areas = Area::with('parent')->get()->keyBy('slug');
 
-        if (!$areas) {
-            $area = Area::where("slug", $slug)->with("parent")->first();
-        } else {
-            $area = $areas->get($slug);
+            // Re-using existing cache logic if user trusts it, but making it request-static
+            $cached = Cache::get('area_structure');
+            if ($cached) {
+                self::$areas = $cached;
+            } else {
+                // Fallback to DB and cache for next time if desired, or just request-cache
+                self::$areas = Area::with('parent')->get()->keyBy('slug');
+                // Optional: Cache::put('area_structure', self::$areas, 60 * 60); 
+            }
         }
+
+        // 2. Retrieve from memory
+        $area = self::$areas->get($slug);
 
         if (!$area) {
             return false;
