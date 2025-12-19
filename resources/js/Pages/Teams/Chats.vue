@@ -301,6 +301,7 @@ const isMe = (userId) => userId === currentUser.id;
                         </div>
                         <div>
                              <div v-for="chat in chatsList" :key="chat.id"
+                                v-if="chat.other_user" 
                                 @click="selectUser(chat.other_user.id)"
                                 class="w-full flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 cursor-pointer"
                                 :class="{ 'bg-yellow-50 border-l-4 border-l-yellow-600': activeUserId === chat.other_user.id }">
@@ -385,7 +386,7 @@ const isMe = (userId) => userId === currentUser.id;
                                 class="flex items-start space-x-3" 
                                 :class="{ 'justify-end': isMe(msg.user_id) }">
                                 
-                                <div v-if="!isMe(msg.user_id)" class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <div v-if="!isMe(msg.user_id) && msg.user" class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
                                      <span class="text-yellow-600 font-medium text-sm">
                                          {{ msg.user.name.substring(0, 2).toUpperCase() }}
                                      </span>
