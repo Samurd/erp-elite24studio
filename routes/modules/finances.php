@@ -49,7 +49,7 @@ Route::middleware("can-area:view,finanzas")
     ->prefix("finances")
     ->name("finances.")
     ->group(function () {
-        Route::get("/", Index::class)->name("index");
+        Route::get("/", [App\Http\Controllers\Modules\FinancesController::class, 'index'])->name("index");
         // ->middleware("can-area:view,finanzas");
     
         // Route::get('/{caseRecord}/edit', Update::class)->name('edit');

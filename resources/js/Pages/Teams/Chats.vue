@@ -15,6 +15,8 @@ import {
     Download 
 } from 'lucide-vue-next';
 import axios from 'axios';
+import EmojiPicker from 'vue3-emoji-picker';
+import 'vue3-emoji-picker/css';
 
 const props = defineProps({
     users: Array,
@@ -164,6 +166,15 @@ const sendMessage = () => {
     });
 };
 
+const handleEnter = (e) => {
+    if (!e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+};
+
+// Transform matches controller output format
+
 // Transform matches controller output format
 const transformMessage = (msg) => {
     // Controller returns user and files relations already transformed mostly or raw models?
@@ -300,8 +311,8 @@ const isMe = (userId) => userId === currentUser.id;
                             <h3 class="text-xs font-semibold text-gray-500 uppercase">Conversaciones recientes</h3>
                         </div>
                         <div>
-                             <div v-for="chat in chatsList" :key="chat.id"
-                                v-if="chat.other_user" 
+                             <template v-for="chat in chatsList" :key="chat.id">
+                             <div v-if="chat.other_user" 
                                 @click="selectUser(chat.other_user.id)"
                                 class="w-full flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 cursor-pointer"
                                 :class="{ 'bg-yellow-50 border-l-4 border-l-yellow-600': activeUserId === chat.other_user.id }">
@@ -322,6 +333,7 @@ const isMe = (userId) => userId === currentUser.id;
                                     {{ chat.last_message.created_at }} // Fix format
                                 </span>
                              </div>
+                             </template>
                         </div>
                     </div>
 
@@ -473,27 +485,38 @@ const isMe = (userId) => userId === currentUser.id;
                                   </div>
                               </div>
 
-                              <form @submit.prevent="sendMessage" class="flex items-center space-x-3">
+                               <form @submit.prevent="sendMessage" class="flex items-end gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200 focus-within:border-yellow-500 focus-within:ring-1 focus-within:ring-yellow-500 transition-all">
                                    <!-- Attachments -->
                                    <div class="relative">
-                                       <button type="button" @click="$refs.fileInput.click()" class="text-gray-500 hover:text-gray-700 p-1">
+                                       <button type="button" @click="$refs.fileInput.click()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors p-2">
                                             <Paperclip class="w-5 h-5" />
                                        </button>
                                        <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileChange">
                                    </div>
 
+                                   <!-- Emoji Picker Toggle -->
+                                    <div class="relative">
+                                        <button type="button" @click="showEmojiPicker = !showEmojiPicker"
+                                            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                                            <Smile class="w-5 h-5" />
+                                        </button>
+                                        <div v-if="showEmojiPicker" class="absolute bottom-full left-0 mb-2 z-50">
+                                            <EmojiPicker @select="e => { newMessage += e.i; showEmojiPicker = false; }" />
+                                        </div>
+                                    </div>
+
                                    <!-- Input -->
-                                   <input v-model="newMessage" type="text" 
+                                   <textarea v-model="newMessage" @keydown.enter="handleEnter"
                                     :placeholder="`Escribe un mensaje a ${selectedUser.name}...`"
-                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                    class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 py-2 min-h-[44px]" rows="1"></textarea>
                                    
                                    <!-- Send -->
                                    <button type="submit" 
-                                    class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 flex items-center justify-center p-2 h-10 w-12"
+                                    class="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                                     :disabled="!newMessage && chatUploads.length === 0">
                                         <SendHorizontal class="w-5 h-5" />
                                    </button>
-                              </form>
+                               </form>
                          </div>
                     </div>
                 </div>

@@ -179,11 +179,11 @@ onMounted(() => {
                 </div>
 
                 <!-- Footer -->
-                <div v-if="notifications.length > 0" class="px-4 py-2 border-t border-gray-200 text-center bg-gray-50">
+                <!-- <div v-if="notifications.length > 0" class="px-4 py-2 border-t border-gray-200 text-center bg-gray-50">
                     <a href="/notifications" class="text-sm text-blue-600 hover:text-blue-800 transition font-medium">
                         Ver todas las notificaciones
                     </a>
-                </div>
+                </div> -->
             </div>
         </transition>
     </div>
