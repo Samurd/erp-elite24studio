@@ -48,9 +48,9 @@ import { Link } from '@inertiajs/vue3';
                         Kits Bienvenida
                     </Link>
                 </li>
-                <li>
+                <!-- <li>
                     <a href="#" class="hover:text-purple-600">Evaluaciones</a>
-                </li>
+                </li> -->
                 <li>
                     <Link :href="route('rrhh.birthdays.index')"
                           :class="route().current('rrhh.birthdays.*') ? 'text-purple-600 font-semibold' : 'hover:text-purple-600'">
