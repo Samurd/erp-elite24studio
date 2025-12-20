@@ -3,6 +3,7 @@ import Sidebar from '@/Components/Sidebar.vue';
 import Navbar from '@/Components/Navbar.vue'; // Import Navbar
 import MarketingSubmenu from '@/Components/Marketing/Submenu.vue';
 import DonationsSubmenu from '@/Components/Donations/Submenu.vue';
+import RrhhSubmenu from '@/Components/Rrhh/Submenu.vue';
 import FileSelectorModal from '@/Components/Cloud/FileSelectorModal.vue';
 import { Head } from '@inertiajs/vue3';
 
@@ -32,6 +33,11 @@ defineProps({
             <!-- Donations Submenu -->
             <div v-if="route().current('donations.*')" class="px-4 py-2 pt-16">
                 <DonationsSubmenu />
+            </div>
+
+            <!-- RRHH Submenu -->
+            <div v-if="route().current('rrhh.*')" class="px-4 py-2 pt-16">
+                <RrhhSubmenu />
             </div>
 
             <main class="flex-1 p-4 overflow-auto pt-20">

@@ -49,85 +49,112 @@ Route::middleware("can-area:view,finanzas")
     ->prefix("finances")
     ->name("finances.")
     ->group(function () {
-        Route::get("/", [App\Http\Controllers\Modules\FinancesController::class, 'index'])->name("index");
+        Route::get("/", [\App\Http\Controllers\Modules\FinancesController::class, 'index'])->name("index");
         // ->middleware("can-area:view,finanzas");
     
         // Route::get('/{caseRecord}/edit', Update::class)->name('edit');
     
         Route::prefix('invoices')->name('invoices.')->group(function () {
-            Route::get("/", InvoicesIndex::class)->name("index");
+            Route::get("/", [\App\Http\Controllers\Modules\InvoicesController::class, 'index'])->name("index");
 
             Route::prefix('clients')->name('clients.')->group(function () {
-                Route::get("/", InvoicesClientsIndex::class)->name("index");
-                Route::get("/create", InvoicesClientsCreate::class)->name("create");
+                Route::get("/", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'index'])->name("index");
+                Route::get("/create", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'create'])->name("create");
+                Route::post("/", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'store'])->name("store");
 
                 // Billing accounts routes must come BEFORE wildcard routes to prevent route conflicts
                 Route::prefix('billing-accounts')->name('billing-accounts.')->group(function () {
-                    Route::get("/", InvoicesClientsBillingAccountsIndex::class)->name("index");
-                    Route::get("/create", InvoicesClientsBillingAccountsCreate::class)->name("create");
-                    Route::get("/{billingAccount}/edit", InvoicesClientsBillingAccountsUpdate::class)->name("edit");
-                    Route::get("/{billingAccount}", InvoicesClientsBillingAccountsShow::class)->name("show");
+                    Route::get("/", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'index'])->name("index");
+                    Route::get("/create", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'create'])->name("create");
+                    Route::post("/", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'store'])->name("store");
+                    Route::get("/{billingAccount}/edit", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'edit'])->name("edit");
+                    Route::post("/{billingAccount}", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'update'])->name("update");
+                    Route::get("/{billingAccount}", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'show'])->name("show");
+                    Route::delete("/{billingAccount}", [\App\Http\Controllers\Modules\Invoices\Clients\BillingAccountsController::class, 'destroy'])->name("destroy");
                 });
 
                 // Wildcard routes should come last to prevent conflicts
-                Route::get("/{invoiceClient}/edit", InvoicesClientsUpdate::class)->name("edit");
-                Route::get("/{invoiceClient}", InvoicesClientsShow::class)->name("show");
+                Route::get("/{invoiceClient}/edit", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'edit'])->name("edit");
+                Route::post("/{invoiceClient}", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'update'])->name("update");
+                Route::get("/{invoiceClient}", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'show'])->name("show");
+                Route::delete("/{invoiceClient}", [\App\Http\Controllers\Modules\Invoices\ClientsController::class, 'destroy'])->name("destroy");
             });
 
             Route::prefix('providers')->name('providers.')->group(function () {
-                Route::get("/", InvoicesProvidersIndex::class)->name("index");
-                Route::get("/create", InvoicesProvidersCreate::class)->name("create");
-                Route::get("/{invoiceProvider}/edit", InvoicesProvidersUpdate::class)->name("edit");
-                Route::get("/{invoiceProvider}", InvoicesProvidersShow::class)->name("show");
+                Route::get("/", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'index'])->name("index");
+                Route::get("/create", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'create'])->name("create");
+                Route::post("/", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'store'])->name("store");
+                Route::get("/{invoiceProvider}/edit", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'edit'])->name("edit");
+                Route::post("/{invoiceProvider}", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'update'])->name("update");
+                Route::get("/{invoiceProvider}", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'show'])->name("show");
+                Route::delete("/{invoiceProvider}", [\App\Http\Controllers\Modules\Invoices\ProvidersController::class, 'destroy'])->name("destroy");
             });
 
         });
 
 
         Route::prefix("taxes")->name("taxes.")->group(function () {
-            Route::get("/", TaxIndex::class)->name("index");
-            Route::get("/create", TaxCreate::class)->name("create");
-            Route::get("/{taxRecord}/edit", TaxUpdate::class)->name("edit");
-            Route::get("/{taxRecord}", TaxShow::class)->name("show");
+            Route::get("/", [\App\Http\Controllers\Modules\TaxesController::class, 'index'])->name("index");
+            Route::get("/create", [\App\Http\Controllers\Modules\TaxesController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\TaxesController::class, 'store'])->name("store");
+            Route::get("/{taxRecord}/edit", [\App\Http\Controllers\Modules\TaxesController::class, 'edit'])->name("edit");
+            Route::post("/{taxRecord}", [\App\Http\Controllers\Modules\TaxesController::class, 'update'])->name("update"); // Using POST for file upload spoofing
+            Route::get("/{taxRecord}", [\App\Http\Controllers\Modules\TaxesController::class, 'show'])->name("show");
+            Route::delete("/{taxRecord}", [\App\Http\Controllers\Modules\TaxesController::class, 'destroy'])->name("destroy");
         });
 
 
         Route::prefix("payrolls")->name("payrolls.")->group(function () {
-            Route::get("/", PayrollIndex::class)->name("index");
-            Route::get("/stats", PayrollStats::class)->name("stats");
-            Route::get("/create", PayrollCreate::class)->name("create");
-            Route::get("/{payroll}/edit", PayrollUpdate::class)->name("edit");
-            Route::get("/{payroll}", PayrollShow::class)->name("show");
+            Route::get("/", [\App\Http\Controllers\Modules\PayrollsController::class, 'index'])->name("index");
+            Route::get("/stats", [\App\Http\Controllers\Modules\PayrollsController::class, 'stats'])->name("stats");
+            Route::get("/create", [\App\Http\Controllers\Modules\PayrollsController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\PayrollsController::class, 'store'])->name("store");
+            Route::get("/{payroll}/edit", [\App\Http\Controllers\Modules\PayrollsController::class, 'edit'])->name("edit");
+            Route::post("/{payroll}", [\App\Http\Controllers\Modules\PayrollsController::class, 'update'])->name("update"); // Using POST for file upload spoofing
+            Route::get("/{payroll}", [\App\Http\Controllers\Modules\PayrollsController::class, 'show'])->name("show");
+            Route::delete("/{payroll}", [\App\Http\Controllers\Modules\PayrollsController::class, 'destroy'])->name("destroy");
         });
 
         Route::prefix("net")->name("net.")->group(function () {
-            Route::get("/", NetIndex::class)->name("index");
+            Route::get("/", [\App\Http\Controllers\Modules\NetIncomeController::class, 'index'])->name("index");
         });
 
 
         Route::prefix("gross")->name("gross.")->group(function () {
-            Route::get("/", GrossIndex::class)->name("index");
-            Route::get("/edit/{income}", \App\Livewire\Modules\Finances\Gross\Components\CreateOrUpdate::class)->name("edit");
-            Route::get("/create", \App\Livewire\Modules\Finances\Gross\Components\CreateOrUpdate::class)->name("create");
+            Route::get("/", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'index'])->name("index");
+            Route::get("/create", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'store'])->name("store");
+            Route::get("/{income}/edit", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'edit'])->name("edit");
+            Route::put("/{income}", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'update'])->name("update");
+            Route::delete("/{income}", [\App\Http\Controllers\Modules\GrossIncomeController::class, 'destroy'])->name("destroy");
         });
 
         Route::prefix("expenses")->name("expenses.")->group(function () {
-            Route::get("/", ExpenseIndex::class)->name("index");
-            Route::get("/edit/{expense}", \App\Livewire\Modules\Finances\Expense\Components\CreateOrUpdate::class)->name("edit");
-            Route::get("/create", \App\Livewire\Modules\Finances\Expense\Components\CreateOrUpdate::class)->name("create");
+            Route::get("/", [\App\Http\Controllers\Modules\ExpensesController::class, 'index'])->name("index");
+            Route::get("/create", [\App\Http\Controllers\Modules\ExpensesController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\ExpensesController::class, 'store'])->name("store");
+            Route::get("/{expense}/edit", [\App\Http\Controllers\Modules\ExpensesController::class, 'edit'])->name("edit");
+            Route::put("/{expense}", [\App\Http\Controllers\Modules\ExpensesController::class, 'update'])->name("update");
+            Route::delete("/{expense}", [\App\Http\Controllers\Modules\ExpensesController::class, 'destroy'])->name("destroy");
         });
 
         Route::prefix("norms")->name("norms.")->group(function () {
-            Route::get("/", NormsIndex::class)->name("index");
-            Route::get("/create", NormsCreate::class)->name("create");
-            Route::get("/{norm}/edit", NormsUpdate::class)->name("edit");
-            Route::get("/{norm}", NormsShow::class)->name("show");
+            Route::get("/", [\App\Http\Controllers\Modules\NormsController::class, 'index'])->name("index");
+            Route::get("/create", [\App\Http\Controllers\Modules\NormsController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\NormsController::class, 'store'])->name("store");
+            Route::get("/{norm}/edit", [\App\Http\Controllers\Modules\NormsController::class, 'edit'])->name("edit");
+            Route::post("/{norm}", [\App\Http\Controllers\Modules\NormsController::class, 'update'])->name("update"); // Using POST for file upload spoofing
+            Route::get("/{norm}", [\App\Http\Controllers\Modules\NormsController::class, 'show'])->name("show");
+            Route::delete("/{norm}", [\App\Http\Controllers\Modules\NormsController::class, 'destroy'])->name("destroy");
         });
 
         Route::prefix("audits")->name("audits.")->group(function () {
-            Route::get("/", AuditsIndex::class)->name("index");
-            Route::get("/create", AuditsCreate::class)->name("create");
-            Route::get("/{audit}/edit", AuditsUpdate::class)->name("edit");
-            Route::get("/{audit}", AuditsShow::class)->name("show");
+            Route::get("/", [\App\Http\Controllers\Modules\AuditsController::class, 'index'])->name("index");
+            Route::get("/create", [\App\Http\Controllers\Modules\AuditsController::class, 'create'])->name("create");
+            Route::post("/", [\App\Http\Controllers\Modules\AuditsController::class, 'store'])->name("store");
+            Route::get("/{audit}/edit", [\App\Http\Controllers\Modules\AuditsController::class, 'edit'])->name("edit");
+            Route::post("/{audit}", [\App\Http\Controllers\Modules\AuditsController::class, 'update'])->name("update"); // Using POST for file upload spoofing
+            Route::get("/{audit}", [\App\Http\Controllers\Modules\AuditsController::class, 'show'])->name("show");
+            Route::delete("/{audit}", [\App\Http\Controllers\Modules\AuditsController::class, 'destroy'])->name("destroy");
         });
     });

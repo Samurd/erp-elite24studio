@@ -17,8 +17,8 @@ class FinancesController extends Controller
 {
     public function index()
     {
-        $totalExpenses = Expense::sum("amount");
-        $totalGrossIncome = Income::sum("amount");
+        $totalExpenses = (int) Expense::sum("amount");
+        $totalGrossIncome = (int) Income::sum("amount");
         $netIncome = $totalGrossIncome - $totalExpenses;
 
         return Inertia::render('Finances/Index', [

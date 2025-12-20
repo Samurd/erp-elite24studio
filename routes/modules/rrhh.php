@@ -60,78 +60,112 @@ Route::middleware('can-area:view,finanzas')
     ->prefix('rrhh')
     ->name('rrhh.')
     ->group(function () {
-        Route::get('/', Index::class)->name('index');
+        Route::get('/', [\App\Http\Controllers\Modules\RrhhController::class, 'index'])->name('index');
 
         Route::prefix('contracts')->name('contracts.')->group(function () {
-            Route::get('/', ContractsIndex::class)->name('index');
-            Route::get('/create', ContractsCreate::class)->name('create');
-            Route::get('/{contract}/edit', ContractsUpdate::class)->name('edit');
-            Route::get('/{contract}/show', ContractsShow::class)->name('show');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'store'])->name('store');
+            Route::get('/{contract}/edit', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'edit'])->name('edit');
+            Route::put('/{contract}', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'update'])->name('update');
+            Route::get('/{contract}/show', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'show'])->name('show');
+            Route::delete('/{contract}', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'destroy'])->name('destroy');
         });
 
 
         Route::prefix('employees')->name('employees.')->group(function () {
-            Route::get('/', EmployeesIndex::class)->name('index');
-            Route::get('/create', EmployeesCreate::class)->name('create');
-            Route::get('/{employee}/edit', EmployeesUpdate::class)->name('edit');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'store'])->name('store');
+            Route::get('/{employee}/edit', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'edit'])->name('edit');
+            Route::put('/{employee}', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'update'])->name('update');
+            Route::delete('/{employee}', [\App\Http\Controllers\Modules\RrhhEmployeesController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('vacancies')->name('vacancies.')->group(function () {
-            Route::get('/', VacanciesIndex::class)->name('index');
-            Route::get('/create', VacanciesCreate::class)->name('create');
-            Route::get('/{vacancy}/edit', VacanciesUpdate::class)->name('edit');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'store'])->name('store');
+            Route::get('/{vacancy}/edit', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'edit'])->name('edit');
+            Route::put('/{vacancy}', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'update'])->name('update');
+            Route::delete('/{vacancy}', [\App\Http\Controllers\Modules\RrhhVacanciesController::class, 'destroy'])->name('destroy');
         });
+
         Route::prefix('applicants')->name('applicants.')->group(function () {
             Route::get('/create', ApplicantsCreate::class)->name('create');
             Route::get('/{applicant}/edit', ApplicantsUpdate::class)->name('edit');
         });
 
         Route::prefix('interviews')->name('interviews.')->group(function () {
-            Route::get('/', InterviewsIndex::class)->name('index');
-            Route::get('/create', InterviewsCreate::class)->name('create');
-            Route::get('/{interview}/edit', InterviewsUpdate::class)->name('edit');
-            Route::get('/calendar', InterviewsCalendarIndex::class)->name('calendar');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'index'])->name('index');
+            Route::get('/calendar', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'calendar'])->name('calendar');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'store'])->name('store');
+            Route::get('/{interview}/edit', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'edit'])->name('edit');
+            Route::put('/{interview}', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'update'])->name('update');
+            Route::delete('/{interview}', [\App\Http\Controllers\Modules\RrhhInterviewsController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('inductions')->name('inductions.')->group(function () {
-            Route::get('/', InductionsIndex::class)->name('index');
-            Route::get('/create', InductionsCreate::class)->name('create');
-            Route::get('/{induction}/edit', InductionsUpdate::class)->name('edit');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'store'])->name('store');
+            Route::get('/{induction}/edit', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'edit'])->name('edit');
+            Route::put('/{induction}', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'update'])->name('update');
+            Route::delete('/{induction}', [\App\Http\Controllers\Modules\RrhhInductionsController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('kits')->name('kits.')->group(function () {
-            Route::get('/', KitsIndex::class)->name('index');
-            Route::get('/create', KitsCreate::class)->name('create');
-            Route::get('/{kit}/edit', KitsUpdate::class)->name('edit');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'store'])->name('store');
+            Route::get('/{kit}/edit', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'edit'])->name('edit');
+            Route::put('/{kit}', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'update'])->name('update');
+            Route::delete('/{kit}', [\App\Http\Controllers\Modules\RrhhKitsController::class, 'destroy'])->name('destroy');
         });
 
 
         Route::prefix('birthdays')->name('birthdays.')->group(function () {
-            Route::get('/', BirthdaysIndex::class)->name('index');
-            Route::get('/create', BirthdaysCreate::class)->name('create');
-            Route::get('/{birthday}/edit', BirthdaysUpdate::class)->name('edit');
-            Route::get('/{birthday}/show', BirthdaysShow::class)->name('show');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'store'])->name('store');
+            Route::get('/{birthday}/edit', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'edit'])->name('edit');
+            Route::put('/{birthday}', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'update'])->name('update');
+            Route::delete('/{birthday}', [\App\Http\Controllers\Modules\RrhhBirthdaysController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('offboardings')->name('offboardings.')->group(function () {
-            Route::get('/', OffBoardingsIndex::class)->name('index');
-            Route::get('/create', OffBoardingsCreate::class)->name('create');
-            Route::get('/{offboarding}/edit', OffBoardingsUpdate::class)->name('edit');
-            Route::get('/{offboarding}/show', OffBoardingsShow::class)->name('show');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'store'])->name('store');
+            Route::get('/{offboarding}', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'show'])->name('show');
+            Route::get('/{offboarding}/edit', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'edit'])->name('edit');
+            Route::put('/{offboarding}', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'update'])->name('update');
+            Route::delete('/{offboarding}', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'destroy'])->name('destroy');
+
+            // Tasks routes
+            Route::post('/{offboarding}/tasks', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'addTask'])->name('tasks.store');
+            Route::put('/tasks/{task}/toggle', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'toggleTask'])->name('tasks.toggle');
+            Route::delete('/tasks/{task}', [\App\Http\Controllers\Modules\RrhhOffboardingsController::class, 'deleteTask'])->name('tasks.destroy');
         });
 
         Route::prefix('attendances')->name('attendances.')->group(function () {
-            Route::get('/', AttendancesIndex::class)->name('index');
-            Route::get('/create', AttendancesCreate::class)->name('create');
-            Route::get('/{attendance}/edit', AttendancesUpdate::class)->name('edit');
-            Route::get('/{attendance}/show', AttendancesShow::class)->name('show');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'store'])->name('store');
+            Route::get('/{attendance}/edit', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'edit'])->name('edit');
+            Route::put('/{attendance}', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'update'])->name('update');
+            Route::delete('/{attendance}', [\App\Http\Controllers\Modules\RrhhAttendancesController::class, 'destroy'])->name('destroy');
         });
 
 
         Route::prefix('holidays')->name('holidays.')->group(function () {
-            Route::get('/', HolidaysIndex::class)->name('index');
-            Route::get('/create', HolidaysCreate::class)->name('create');
-            Route::get('/{holiday}/edit', HolidaysUpdate::class)->name('edit');
-            Route::get('/{holiday}/show', HolidaysShow::class)->name('show');
+            Route::get('/', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'store'])->name('store');
+            Route::get('/{holiday}/edit', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'edit'])->name('edit');
+            Route::put('/{holiday}', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'update'])->name('update');
+            Route::delete('/{holiday}', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'destroy'])->name('destroy');
+            Route::get('/{holiday}', [\App\Http\Controllers\Modules\RrhhHolidaysController::class, 'show'])->name('show');
         });
     });

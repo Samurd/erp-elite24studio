@@ -43,10 +43,9 @@ const logout = () => {
             </Link>
 
             <!-- Modulo Teams -->
-            <a href="/teams" class="cursor-pointer text-gray-500 hover:text-gray-700">
-                <!-- <x-bi-microsoft-teams class="w-6 h-6" /> -->
+            <Link :href="route('teams.index')" class="cursor-pointer text-gray-500 hover:text-gray-700">
                 <i class="fab fa-microsoft text-2xl text-black"></i>
-            </a>
+            </Link>
 
             <!-- Usuarios -->
             <Link v-if="permissions.usuarios" href="/users" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700">
