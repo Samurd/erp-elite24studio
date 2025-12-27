@@ -5,6 +5,7 @@ import { useForm, usePage } from '@inertiajs/vue3';
 // We might need a generic file component or use the one from Cloud module
 import EmojiPicker from 'vue3-emoji-picker'; 
 import 'vue3-emoji-picker/css';
+import { Paperclip, FileText, Download, X } from 'lucide-vue-next';
 
 const props = defineProps({
     channel: Object, // Active channel
@@ -18,6 +19,8 @@ const isLoadingOld = ref(false);
 const messagesContainer = ref(null);
 const sentinel = ref(null);
 const showEmojiPicker = ref(false);
+const fileInput = ref(null);
+const chatUploads = ref([]); // File objects
 
 const loadMessages = async () => {
     // Initial fetch via API to avoid massive payload on Inertia load if desired, 
@@ -66,11 +69,22 @@ const scrollToBottom = () => {
     });
 };
 
+const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    chatUploads.value = [...chatUploads.value, ...files];
+    e.target.value = ''; 
+};
+
+const removeAttachment = (index) => {
+    chatUploads.value.splice(index, 1);
+};
+
 const sendMessage = async () => {
-    if (!tempMessage.value.trim()) return;
+    if (!tempMessage.value.trim() && chatUploads.value.length === 0) return;
     
     const content = tempMessage.value;
     const tempId = 'temp_' + Date.now();
+    const files = [...chatUploads.value];
     
     // Optimistic update
     optimisticMessages.value.push({
@@ -80,14 +94,27 @@ const sendMessage = async () => {
         created_at: new Date().toISOString(),
         user: { name: usePage().props.auth.user.name },
         is_optimistic: true,
+        files: files.map(f => ({
+             name: f.name,
+             readable_size: (f.size / 1024).toFixed(2) + ' KB',
+             url: '#'
+        })),
     });
     
     tempMessage.value = '';
+    chatUploads.value = [];
     scrollToBottom();
     
     try {
-        const response = await axios.post(route('teams.channels.messages.store', [props.team.id, props.channel.id]), {
-            content: content
+        const formData = new FormData();
+        formData.append('content', content);
+        
+        files.forEach((file, index) => {
+            formData.append(`files[${index}]`, file);
+        });
+
+        const response = await axios.post(route('teams.channels.messages.store', [props.team.id, props.channel.id]), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
         
         // Remove optimistic message
@@ -176,11 +203,20 @@ onUnmounted(() => {
     <div class="flex flex-col h-full bg-gray-50">
         <!-- Header -->
         <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
-            <div>
-                <h2 class="text-xl font-bold text-gray-900 flex items-center">
-                    <span class="text-gray-400 mr-2 text-2xl">#</span> {{ channel.name }}
-                </h2>
-                <p class="text-sm text-gray-500">{{ channel.description || 'Sin descripción' }}</p>
+            <div class="flex items-center">
+                <div v-if="team" class="flex items-center mr-4 pr-4 border-r border-gray-200">
+                    <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-8 h-8 rounded-md object-cover mr-2" />
+                    <div v-else class="w-8 h-8 bg-yellow-100 text-yellow-700 rounded-md flex items-center justify-center font-bold text-xs mr-2">
+                        {{ team.name.substring(0, 2).toUpperCase() }}
+                    </div>
+                    <span class="text-sm font-semibold text-gray-600 hidden md:block">{{ team.name }}</span>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                        <span class="text-gray-400 mr-2 text-2xl">#</span> {{ channel.name }}
+                    </h2>
+                    <p class="text-sm text-gray-500">{{ channel.description || 'Sin descripción' }}</p>
+                </div>
             </div>
              <div class="flex items-center space-x-2 text-sm text-gray-500">
                 <i class="fas fa-users w-4 h-4"></i>
@@ -216,7 +252,14 @@ onUnmounted(() => {
                         
                         <!-- Files (Simplified) -->
                         <div v-if="msg.files && msg.files.length" class="mt-2 space-y-1">
-                             <!-- File display logic -->
+                             <a v-for="file in msg.files" :key="file.id" :href="file.url" target="_blank"
+                                class="flex items-center p-2 rounded-md transition-colors text-xs group-file"
+                                :class="msg.user_id === $page.props.auth.user.id ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'">
+                                 <FileText class="w-4 h-4 mr-2 opacity-70" />
+                                 <span class="truncate max-w-[150px]">{{ file.name }}</span>
+                                  <span class="ml-2 opacity-60">{{ file.readable_size }}</span>
+                                  <Download class="w-3 h-3 ml-auto opacity-70" />
+                            </a>
                         </div>
                         
                         <div class="flex items-center space-x-1 mt-1 text-[10px]"
@@ -239,6 +282,16 @@ onUnmounted(() => {
                  <div class="max-w-[70%]">
                     <div class="px-4 py-2 rounded-2xl shadow-sm text-sm bg-yellow-500 text-white rounded-tr-none">
                         <p>{{ msg.content }}</p>
+                        
+                        <div v-if="msg.files && msg.files.length" class="mt-2 space-y-1">
+                             <div v-for="(file, idx) in msg.files" :key="idx"
+                                class="flex items-center p-2 rounded-md bg-yellow-600 text-white text-xs">
+                                 <FileText class="w-4 h-4 mr-2 opacity-70" />
+                                 <span class="truncate max-w-[150px]">{{ file.name }}</span>
+                                 <span class="ml-2 opacity-60">{{ file.readable_size }}</span>
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-end space-x-1 mt-1 text-[10px] text-yellow-100">
                              <i class="fas fa-clock"></i>
                         </div>
@@ -252,8 +305,24 @@ onUnmounted(() => {
         
         <!-- Input Area -->
         <div class="bg-white border-t border-gray-200 p-4">
+             <!-- File Preview -->
+             <div v-if="chatUploads.length > 0" class="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 rounded-lg">
+                  <div v-for="(file, idx) in chatUploads" :key="idx" class="flex items-center bg-white border border-gray-200 rounded px-2 py-1 text-xs">
+                      <span class="truncate max-w-[150px]">{{ file.name }}</span>
+                      <button @click="removeAttachment(idx)" class="ml-2 text-red-500 hover:text-red-700">
+                        <X class="w-3 h-3" />
+                      </button>
+                  </div>
+              </div>
+
             <form @submit.prevent="sendMessage" class="flex items-end gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200 focus-within:border-yellow-500 focus-within:ring-1 focus-within:ring-yellow-500 transition-all">
-                <!-- Attachments Button (TODO) -->
+                <!-- Attachments Button -->
+                <div class="relative">
+                   <button type="button" @click="$refs.fileInput.click()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors p-2">
+                        <Paperclip class="w-5 h-5" />
+                   </button>
+                   <input ref="fileInput" type="file" multiple class="hidden" @change="handleFileChange">
+               </div>
                 
                 <!-- Emoji Picker Toggle -->
                 <div class="relative">
@@ -270,7 +339,7 @@ onUnmounted(() => {
                     class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 py-2 min-h-[44px]" rows="1"
                     placeholder="Escribe un mensaje..."></textarea>
                     
-                <button type="submit" :disabled="!tempMessage.trim()"
+                <button type="submit" :disabled="!tempMessage.trim() && chatUploads.length === 0"
                     class="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm">
                     <i class="fas fa-paper-plane w-5 h-5"></i>
                 </button>

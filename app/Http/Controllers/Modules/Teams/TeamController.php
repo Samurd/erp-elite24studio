@@ -59,14 +59,19 @@ class TeamController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'isPublic' => 'boolean',
+            'photo' => 'nullable|mimes:jpg,jpeg,png,white|max:4096',
         ]);
 
         $team = Team::create([
             'name' => $request->name,
             'description' => $request->description,
             'isPublic' => $request->isPublic ?? true,
-            'owner_id' => Auth::id(), // Assuming there's an owner_id or we attach via pivot
+            'owner_id' => Auth::id(),
         ]);
+
+        if ($request->hasFile('photo')) {
+            $team->updateProfilePhoto($request->file('photo'));
+        }
 
         // Attach creator as owner
         $ownerRole = TeamRole::where('slug', 'owner')->first();
@@ -158,6 +163,7 @@ class TeamController extends Controller
                     'is_private' => $ch->is_private,
                     'members_count' => $ch->is_private ? $ch->members()->count() : count($members),
                     'is_channel_member' => $isChannelMember,
+                    'parent_id' => $ch->parent_id,
                 ];
             });
 
@@ -189,10 +195,13 @@ class TeamController extends Controller
             abort(403, 'Solo los owners pueden actualizar el equipo.');
         }
 
+        \Illuminate\Support\Facades\Log::info('Updating Team:', ['team_id' => $team->id, 'inputs' => $request->all(), 'has_photo' => $request->hasFile('photo')]);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'isPublic' => 'boolean'
+            'isPublic' => 'boolean',
+            'photo' => 'nullable|mimes:jpg,jpeg,png|max:4096',
         ]);
 
         $team->update([
@@ -200,6 +209,10 @@ class TeamController extends Controller
             'description' => $request->description,
             'isPublic' => $request->isPublic
         ]);
+
+        if ($request->hasFile('photo')) {
+            $team->updateProfilePhoto($request->file('photo'));
+        }
 
         return back()->with('message', 'Equipo actualizado exitosamente.');
     }

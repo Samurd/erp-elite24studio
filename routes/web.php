@@ -96,4 +96,9 @@ Route::middleware([
         "users.store",
     );
     Route::delete("/users/{user}", [UsersController::class, "destroy"])->name("users.destroy");
+
+    // Tags Management
+    Route::post('/tags', [\App\Http\Controllers\TagsController::class, 'store'])->name('tags.store');
+    Route::put('/tags/{tag}', [\App\Http\Controllers\TagsController::class, 'update'])->name('tags.update');
+    Route::delete('/tags/{tag}', [\App\Http\Controllers\TagsController::class, 'destroy'])->name('tags.destroy');
 });

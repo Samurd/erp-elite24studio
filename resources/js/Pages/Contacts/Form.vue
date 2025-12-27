@@ -7,6 +7,10 @@ import InputLabel from '@/Components/InputLabel.vue';
 import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
+import DialogModal from '@/Components/DialogModal.vue';
+import DangerButton from '@/Components/DangerButton.vue';
+import { ref } from 'vue';
+import { router } from '@inertiajs/vue3'; // Import router manually
 
 const props = defineProps({
     isEdit: Boolean,
@@ -44,6 +48,64 @@ const submit = () => {
         form.post(route('contacts.store'));
     }
 };
+
+// Tag Management
+const showTagsModal = ref(false);
+const tagForm = useForm({
+    id: null,
+    name: '',
+    color: '#3B82F6', // Default blue-500
+    category_slug: 'etiqueta_contacto',
+});
+
+const openTagsModal = () => {
+    tagForm.reset();
+    tagForm.id = null;
+    showTagsModal.value = true;
+};
+
+const editTag = (tag) => {
+    tagForm.id = tag.id;
+    tagForm.name = tag.name;
+    tagForm.color = tag.color || '#3B82F6';
+    // showTagsModal.value = true; // Already open
+};
+
+const cancelEditTag = () => {
+    tagForm.reset();
+    tagForm.id = null;
+};
+
+const submitTag = () => {
+    if (tagForm.id) {
+        tagForm.put(route('tags.update', tagForm.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                cancelEditTag();
+                // Refresh options? Inertia handles props reload on back(), 
+                // but we might need to manually ensure options are fresh or just rely on router.reload
+                 router.reload({ only: ['options'] });
+            }
+        });
+    } else {
+        tagForm.post(route('tags.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                cancelEditTag();
+                router.reload({ only: ['options'] });
+            }
+        });
+    }
+};
+
+const deleteTag = (tag) => {
+    if (confirm('¿Eliminar etiqueta?')) {
+        router.delete(route('tags.destroy', tag.id), {
+             preserveScroll: true,
+             onSuccess: () => router.reload({ only: ['options'] })
+        });
+    }
+};
 </script>
 
 <template>
@@ -59,7 +121,7 @@ const submit = () => {
                     <!-- Name -->
                     <div>
                         <InputLabel for="name" value="Nombre Contacto" />
-                        <TextInput id="name" type="text" v-model="form.name" class="w-full mt-1" required autofocus />
+                        <TextInput id="name" type="text" v-model="form.name" class="w-full mt-1" required />
                         <InputError :message="form.errors.name" class="mt-1" />
                     </div>
 
@@ -168,7 +230,12 @@ const submit = () => {
 
                     <!-- Label -->
                     <div>
-                        <InputLabel for="label" value="Etiqueta" />
+                        <div class="flex justify-between items-center mb-1">
+                             <InputLabel for="label" value="Etiqueta" />
+                             <button type="button" @click="openTagsModal" class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
+                                 Gestionar
+                             </button>
+                        </div>
                          <select id="label" v-model="form.label_id"
                             class="mt-1 w-full border border-gray-300 focus:border-yellow-500 rounded-lg p-2 focus:ring-yellow-500">
                             <option value="">Seleccione...</option>
@@ -199,4 +266,57 @@ const submit = () => {
             </div>
         </main>
     </AppLayout>
+
+    <!-- Tags Management Modal -->
+    <DialogModal :show="showTagsModal" @close="showTagsModal = false">
+        <template #title>
+            Gestionar Etiquetas
+        </template>
+        <template #content>
+            <div class="mb-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">{{ tagForm.id ? 'Editar Etiqueta' : 'Nueva Etiqueta' }}</h4>
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <TextInput v-model="tagForm.name" placeholder="Nombre de etiqueta" class="w-full" />
+                        <InputError :message="tagForm.errors.name" class="mt-1" />
+                    </div>
+                    <div class="w-24">
+                         <input type="color" v-model="tagForm.color" class="h-10 w-full border border-gray-300 rounded-md cursor-pointer" />
+                    </div>
+                    <PrimaryButton @click="submitTag" :disabled="tagForm.processing">
+                        {{ tagForm.id ? 'Actualizar' : 'Agregar' }}
+                    </PrimaryButton>
+                    <SecondaryButton v-if="tagForm.id" @click="cancelEditTag">
+                        Cancelar
+                    </SecondaryButton>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Etiquetas Existentes</h4>
+                <div v-if="options.labels.length === 0" class="text-gray-500 text-sm italic">No hay etiquetas creadas.</div>
+                <div class="space-y-2 max-h-60 overflow-y-auto">
+                    <div v-for="tag in options.labels" :key="tag.id" class="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 group">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-4 h-4 rounded-full" :style="{ backgroundColor: tag.color || '#ccc' }"></div>
+                            <span class="text-gray-900 font-medium">{{ tag.name }}</span>
+                        </div>
+                        <div class="flex items-center space-x-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <button @click="editTag(tag)" class="text-blue-600 hover:text-blue-800 p-1">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button @click="deleteTag(tag)" class="text-red-600 hover:text-red-800 p-1">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template #footer>
+            <SecondaryButton @click="showTagsModal = false">
+                Cerrar
+            </SecondaryButton>
+        </template>
+    </DialogModal>
 </template>

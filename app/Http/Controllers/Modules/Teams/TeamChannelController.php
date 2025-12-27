@@ -49,14 +49,15 @@ class TeamChannelController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'is_private' => 'boolean',
+            'parent_id' => 'nullable|exists:team_channels,id',
         ]);
 
-        $channel = TeamChannel::create([
-            'team_id' => $team->id,
+        $channel = $team->channels()->create([
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'slug' => \Illuminate\Support\Str::slug($request->name),
             'description' => $request->description,
             'is_private' => $request->is_private,
+            'parent_id' => $request->parent_id,
         ]);
 
         // Auto-join creator to channel (both public and private)
@@ -78,15 +79,18 @@ class TeamChannelController extends Controller
             abort(403);
 
         $request->validate([
-            'name' => 'required|string',
-            'description' => 'nullable|string',
-            'is_private' => 'boolean'
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'is_private' => 'boolean',
+            'parent_id' => 'nullable|exists:team_channels,id',
         ]);
 
         $channel->update([
             'name' => $request->name,
+            'slug' => \Illuminate\Support\Str::slug($request->name),
             'description' => $request->description,
             'is_private' => $request->is_private,
+            'parent_id' => $request->parent_id,
         ]);
 
         // Handle private members update if needed

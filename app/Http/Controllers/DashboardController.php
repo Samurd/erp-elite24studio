@@ -11,8 +11,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalIngresos = Income::sum('amount');
-        $totalGastos = Expense::sum('amount');
+        $totalIngresos = (int) Income::sum('amount');
+        $totalGastos = (int) Expense::sum('amount');
         $totalGeneral = $totalIngresos - $totalGastos;
 
         return Inertia::render('Dashboard/Index', [

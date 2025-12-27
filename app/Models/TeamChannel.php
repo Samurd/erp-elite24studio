@@ -11,7 +11,8 @@ class TeamChannel extends Model
         'name',
         'slug',
         'description',
-        'is_private'
+        'is_private',
+        'parent_id',
     ];
 
     /**
@@ -20,6 +21,22 @@ class TeamChannel extends Model
     public function team()
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Relation: Parent channel.
+     */
+    public function parent()
+    {
+        return $this->belongsTo(TeamChannel::class, 'parent_id');
+    }
+
+    /**
+     * Relation: Child channels (subchannels).
+     */
+    public function children()
+    {
+        return $this->hasMany(TeamChannel::class, 'parent_id');
     }
 
     /**

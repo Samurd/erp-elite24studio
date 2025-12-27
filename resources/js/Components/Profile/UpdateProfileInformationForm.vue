@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import FormSection from '@/Components/FormSection.vue';
 import Input from '@/Components/Input.vue';
 import InputError from '@/Components/InputError.vue';
@@ -8,15 +8,18 @@ import Label from '@/Components/Label.vue';
 import Button from '@/Components/Button.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 
-const page = usePage();
-const user = page.props.auth.user;
+const props = defineProps({
+    user: Object,
+});
 
 const form = useForm({
     _method: 'PUT',
-    name: user.name,
-    email: user.email,
+    name: props.user.name,
+    email: props.user.email,
     photo: null,
 });
+
+const verificationLinkSent = ref(null);
 
 const photoPreview = ref(null);
 const photoInput = ref(null);
@@ -31,6 +34,10 @@ const updateProfileInformation = () => {
         preserveScroll: true,
         onSuccess: () => clearPhotoFileInput(),
     });
+};
+
+const sendEmailVerification = () => {
+    verificationLinkSent.value = true;
 };
 
 const selectNewPhoto = () => {
@@ -80,7 +87,7 @@ const clearPhotoFileInput = () => {
 
         <template #form>
             <!-- Profile Photo -->
-            <div v-if="page.props.jetstream.managesProfilePhotos" class="col-span-6 sm:col-span-4">
+            <div v-if="$page.props.jetstream.managesProfilePhotos" class="col-span-6 sm:col-span-4">
                 <!-- Profile Photo File Input -->
                 <input
                     ref="photoInput"
@@ -144,6 +151,26 @@ const clearPhotoFileInput = () => {
                     autocomplete="username"
                 />
                 <InputError :message="form.errors.email" class="mt-2" />
+
+                <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
+                    <p class="text-sm mt-2">
+                        Tu dirección de correo electrónico no está verificada.
+
+                        <Link
+                            :href="route('verification.send')"
+                            method="post"
+                            as="button"
+                            class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            @click.prevent="sendEmailVerification"
+                        >
+                            Haz clic aquí para re enviar el correo de verificación.
+                        </Link>
+                    </p>
+
+                    <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-green-600">
+                        Se ha enviado un nuevo enlace de verificación a tu dirección de correo electrónico.
+                    </div>
+                </div>
             </div>
         </template>
 

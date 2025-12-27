@@ -11,17 +11,29 @@ class UsersController extends Controller
 {
     public $slug = "usuarios";
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with([
-            'roles.permissions.area'
-        ])
-            ->paginate(10)
+        $query = User::with(['roles.permissions.area']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $roleId = $request->input('role');
+            $query->whereHas('roles', function ($q) use ($roleId) {
+                $q->where('id', $roleId);
+            });
+        }
+
+        $users = $query->paginate(10)
             ->withQueryString();
 
-
-        // Transform data if necessary, or pass as is. 
-        // View expects permissions to show actions.
+        $roles = Role::orderBy('display_name')->get();
 
         $permissionCreate = \App\Services\AreaPermissionService::canArea('create', $this->slug);
         $canUpdate = \App\Services\AreaPermissionService::canArea('update', $this->slug);
@@ -29,6 +41,8 @@ class UsersController extends Controller
 
         return \Inertia\Inertia::render('Users/Index', [
             'users' => $users,
+            'roles' => $roles, // Pass available roles for filter
+            'filters' => $request->only(['search', 'role']), // Pass current filters
             'slug' => $this->slug,
             'permissions' => [
                 'create' => $permissionCreate,

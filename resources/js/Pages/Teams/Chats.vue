@@ -52,28 +52,42 @@ const form = useForm({
 
 // Optimistic UI updates
 const optimisticMessages = ref([]);
+const isLoadingChat = ref(false);
 
-const selectUser = (userId) => {
+const selectUser = (user) => {
+    const userId = user.id;
     if (activeUserId.value === userId) return;
+
+    isLoadingChat.value = true;
     
-    // Navigate to same route with different param to trigger standard Inertia reload
-    // giving us fresh props (messages, selectedChat, etc)
-    router.get(route('teams.chats', userId), {}, {
-        preserveState: true, // Keep sidebar state? 
-        // Actually, we want to replace the main content. 
-        // A full visit is easiest to ensure data integrity without manual axios calls.
-        preserveScroll: true,
-        only: ['initialSelectedUser', 'initialSelectedChat', 'initialMessages'],
-        onSuccess: (page) => {
-             activeUserId.value = userId;
-             selectedUser.value = page.props.initialSelectedUser;
-             selectedChat.value = page.props.initialSelectedChat;
-             messages.value = page.props.initialMessages || [];
-             optimisticMessages.value = [];
-             scrollToBottom();
-             setupEcho();
-        }
-    });
+    // Update active ID immediately for UI feedback (selection highlight)
+    activeUserId.value = userId;
+    // Optimistically set selectedUser so the main view (and skeleton) renders immediately
+    selectedUser.value = user;
+    
+    // Optional: Update URL without reload
+    const url = route('teams.chats', userId);
+    window.history.pushState({}, '', url);
+
+    axios.get(route('teams.chats.conversation', userId))
+        .then(response => {
+            const data = response.data;
+            
+            selectedUser.value = data.user;
+            selectedChat.value = data.chat;
+            messages.value = data.messages || [];
+            optimisticMessages.value = [];
+            
+            scrollToBottom();
+            setupEcho();
+        })
+        .catch(error => {
+            console.error("Error loading chat conversation", error);
+            // Revert activeUserId if failed? 
+        })
+        .finally(() => {
+            isLoadingChat.value = false;
+        });
 };
 
 const scrollToBottom = () => {
@@ -312,13 +326,14 @@ const isMe = (userId) => userId === currentUser.id;
                         </div>
                         <div>
                              <template v-for="chat in chatsList" :key="chat.id">
-                             <div v-if="chat.other_user" 
-                                @click="selectUser(chat.other_user.id)"
-                                class="w-full flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 cursor-pointer"
+                            <div v-if="chat.other_user" 
+                               @click="selectUser(chat.other_user)"
+                               class="w-full flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 cursor-pointer"
                                 :class="{ 'bg-yellow-50 border-l-4 border-l-yellow-600': activeUserId === chat.other_user.id }">
                                 
-                                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                                    <span class="text-yellow-600 font-medium">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0 bg-yellow-100 object-cover overflow-hidden">
+                                    <img v-if="chat.other_user.profile_photo_url" :src="chat.other_user.profile_photo_url" :alt="chat.other_user.name" class="w-full h-full object-cover" />
+                                    <span v-else class="text-yellow-600 font-medium">
                                         {{ chat.other_user.name.substring(0, 2).toUpperCase() }}
                                     </span>
                                 </div>
@@ -343,12 +358,13 @@ const isMe = (userId) => userId === currentUser.id;
                     </div>
                     <div>
                          <div v-for="user in users" :key="user.id"
-                            @click="selectUser(user.id)"
+                            @click="selectUser(user)"
                             class="w-full flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 cursor-pointer"
                             :class="{ 'bg-yellow-50 border-l-4 border-l-yellow-600': activeUserId === user.id }">
                             
-                             <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                <span class="text-blue-600 font-medium text-sm">
+                             <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3 bg-blue-100 object-cover overflow-hidden">
+                                <img v-if="user.profile_photo_url" :src="user.profile_photo_url" :alt="user.name" class="w-full h-full object-cover" />
+                                <span v-else class="text-blue-600 font-medium text-sm">
                                     {{ user.name.substring(0, 2).toUpperCase() }}
                                 </span>
                             </div>
@@ -368,8 +384,9 @@ const isMe = (userId) => userId === currentUser.id;
                     <!-- Header Chat -->
                     <div class="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
                         <div class="flex items-center space-x-4">
-                             <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-full flex items-center justify-center">
-                                <span class="text-white font-medium text-lg">
+                             <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-full flex items-center justify-center overflow-hidden">
+                                <img v-if="selectedUser.profile_photo_url" :src="selectedUser.profile_photo_url" :alt="selectedUser.name" class="w-full h-full object-cover" />
+                                <span v-else class="text-white font-medium text-lg">
                                     {{ selectedUser.name.substring(0, 2).toUpperCase() }}
                                 </span>
                             </div>
@@ -380,8 +397,32 @@ const isMe = (userId) => userId === currentUser.id;
                         </div>
                     </div>
 
+                    <!-- Mensajes Loading State -->
+                    <div v-if="isLoadingChat" class="flex-1 p-6 space-y-4 overflow-hidden">
+                        <div class="animate-pulse flex items-start space-x-3">
+                            <div class="rounded-full bg-gray-200 h-8 w-8"></div>
+                            <div class="flex-1 space-y-2 py-1">
+                                <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                                <div class="h-10 bg-gray-200 rounded w-2/3"></div>
+                            </div>
+                        </div>
+                        <div class="animate-pulse flex items-start space-x-3 justify-end">
+                            <div class="flex-1 space-y-2 py-1 flex flex-col items-end">
+                                <div class="h-10 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                            <div class="rounded-full bg-gray-200 h-8 w-8"></div>
+                        </div>
+                         <div class="animate-pulse flex items-start space-x-3">
+                            <div class="rounded-full bg-gray-200 h-8 w-8"></div>
+                            <div class="flex-1 space-y-2 py-1">
+                                <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                                <div class="h-16 bg-gray-200 rounded w-3/4"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Mensajes -->
-                    <div ref="messagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4">
+                    <div v-else ref="messagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4">
                         <!-- Boton cargar mas -->
                         <div v-if="!isLoadingOld && messages.length >= 20" class="flex justify-center">
                             <button @click="loadMore" class="text-xs text-gray-500 hover:text-gray-700">
@@ -398,8 +439,9 @@ const isMe = (userId) => userId === currentUser.id;
                                 class="flex items-start space-x-3" 
                                 :class="{ 'justify-end': isMe(msg.user_id) }">
                                 
-                                <div v-if="!isMe(msg.user_id) && msg.user" class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                     <span class="text-yellow-600 font-medium text-sm">
+                                <div v-if="!isMe(msg.user_id) && msg.user" class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-100 overflow-hidden">
+                                     <img v-if="msg.user.profile_photo_url" :src="msg.user.profile_photo_url" :alt="msg.user.name" class="w-full h-full object-cover" />
+                                     <span v-else class="text-yellow-600 font-medium text-sm">
                                          {{ msg.user.name.substring(0, 2).toUpperCase() }}
                                      </span>
                                 </div>
@@ -434,8 +476,9 @@ const isMe = (userId) => userId === currentUser.id;
                                      </div>
                                 </div>
 
-                                <div v-if="isMe(msg.user_id)" class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                     <span class="text-white font-medium text-sm">
+                                <div v-if="isMe(msg.user_id)" class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-600 overflow-hidden">
+                                     <img v-if="currentUser.profile_photo_url" :src="currentUser.profile_photo_url" :alt="currentUser.name" class="w-full h-full object-cover" />
+                                     <span v-else class="text-white font-medium text-sm">
                                          {{ currentUser.name.substring(0, 2).toUpperCase() }}
                                      </span>
                                 </div>
@@ -466,8 +509,9 @@ const isMe = (userId) => userId === currentUser.id;
                                         </div>
                                   </div>
                              </div>
-                              <div class="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                     <span class="text-white font-medium text-sm">
+                              <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-yellow-600 overflow-hidden">
+                                     <img v-if="currentUser.profile_photo_url" :src="currentUser.profile_photo_url" :alt="currentUser.name" class="w-full h-full object-cover" />
+                                     <span v-else class="text-white font-medium text-sm">
                                          {{ currentUser.name.substring(0, 2).toUpperCase() }}
                                      </span>
                                 </div>

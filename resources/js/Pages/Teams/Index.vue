@@ -141,21 +141,21 @@ const getRoleBadge = (team) => {
             <!-- Contenido principal -->
             <div class="flex-1 flex flex-col overflow-hidden">
                 <!-- Navegación superior -->
-                <div class="bg-gray-200 text-gray-900 px-6 py-3">
+                <div class="bg-gray-900 text-white px-6 py-3">
                     <div class="flex items-center space-x-6">
                         <Link :href="route('teams.index')"
-                            class="flex items-center space-x-2 text-gray-900 hover:text-white transition-colors">
+                            class="flex items-center space-x-2 hover:text-white transition-colors">
                             <i class="fas fa-users"></i>
                             <span>Equipos</span>
                         </Link>
                         <!-- Todo: Link to separate chats page or similar if exists, sticking to Team focus -->
                         <a href="#"
-                            class="flex items-center space-x-2 text-gray-900 hover:text-white transition-colors">
+                            class="flex items-center space-x-2 hover:text-white transition-colors">
                             <i class="fas fa-comments"></i>
                             <span>Chats</span>
                         </a>
                         <Link :href="route('teams.create')"
-                            class="flex items-center space-x-2 text-gray-900 hover:text-white transition-colors">
+                            class="flex items-center space-x-2 hover:text-white transition-colors">
                             <i class="fas fa-plus"></i>
                             <span>Nuevo Equipo</span>
                         </Link>
@@ -189,8 +189,9 @@ const getRoleBadge = (team) => {
                                 <div class="flex items-start space-x-4 flex-1">
                                     <!-- Avatar del equipo -->
                                     <div class="flex-shrink-0">
-                                        <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-xl flex items-center justify-center">
-                                            <i class="fas fa-users text-white text-2xl"></i>
+                                        <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-16 h-16 rounded-xl object-cover" />
+                                        <div v-else class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-xl flex items-center justify-center">
+                                            <span class="text-white text-xl font-bold">{{ team.name.substring(0, 2).toUpperCase() }}</span>
                                         </div>
                                     </div>
 

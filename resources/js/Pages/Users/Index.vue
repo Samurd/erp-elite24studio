@@ -2,15 +2,33 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     users: Object,
     slug: String,
     permissions: Object,
+    roles: Array,
+    filters: Object,
 });
 
+const search = ref(props.filters?.search || '');
+const role = ref(props.filters?.role || '');
+
+let timeout = null;
+
 const page = usePage();
+
+watch([search, role], ([newSearch, newRole]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        router.get(route('users.index'), { search: newSearch, role: newRole }, {
+             preserveState: true,
+             replace: true,
+             preserveScroll: true
+        });
+    }, 300);
+});
 
 const confirmDelete = (userId) => {
     if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
@@ -46,11 +64,29 @@ const formatDate = (dateString) => {
         <div class="py-12">
             <div class="mx-auto sm:px-6 lg:px-8">
                 
-                <div class="mb-4 flex justify-end" v-if="permissions.create">
-                    <!-- Standard Link to Livewire Create Page -->
-                    <Link :href="route('users.create')" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Crear nuevo usuario
-                    </Link>
+                <div class="mb-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <!-- Filters -->
+                    <div class="flex flex-1 items-center gap-4 w-full md:w-auto">
+                        <div class="relative w-full md:w-64">
+                            <input v-model="search" type="text" placeholder="Buscar usuarios..." 
+                                class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm" />
+                        </div>
+                        <div class="w-full md:w-48">
+                            <select v-model="role" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">
+                                <option value="">Todos los roles</option>
+                                <option v-for="r in roles" :key="r.id" :value="r.id">
+                                    {{ r.display_name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div v-if="permissions.create">
+                        <!-- Standard Link to Livewire Create Page -->
+                        <Link :href="route('users.create')" class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded text-sm transition ease-in-out duration-150">
+                            Crear nuevo usuario
+                        </Link>
+                    </div>
                 </div>
 
                 <div class="bg-white overflow-hidden sm:rounded-lg">

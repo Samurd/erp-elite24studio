@@ -140,8 +140,21 @@ const getStatusColor = (name) => {
                             <ApprovalTable :approvals="received_approvals" @view="openModal" />
                         </div>
                          <!-- SubTab: Contratos -->
-                        <div v-if="subTab === 'contratos'">
-                             <iframe src="https://elite-24-studio-sas.odoo.com/odoo/sign-documents" width="100%" height="800" frameborder="0" style="border: none;"></iframe>
+                        <div v-if="subTab === 'contratos'" class="flex items-center justify-center p-10 bg-white rounded-lg border border-dashed border-gray-300 min-h-[400px]">
+                             <div class="text-center">
+                                 <div class="bg-gray-100 p-4 rounded-full inline-block mb-4">
+                                     <i class="fas fa-file-signature text-4xl text-gray-500"></i>
+                                 </div>
+                                 <h3 class="text-lg font-medium text-gray-900 mb-2">Portal de Firmas Odoo</h3>
+                                 <p class="text-gray-500 mb-6 max-w-sm mx-auto">
+                                     Por políticas de seguridad, el panel de firmas debe abrirse en una ventana segura.
+                                 </p>
+                                 <a href="https://elite-24-studio-sas.odoo.com/odoo/sign-documents" target="_blank" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-700 hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                     <i class="fas fa-external-link-alt mr-2"></i>
+                                     Abrir Panel de Firmas
+                                 </a>
+                             </div>
                         </div>
                         <!-- SubTab: Solicitud (Buy) -->
                         <div v-if="subTab === 'solicitud'">
@@ -154,8 +167,21 @@ const getStatusColor = (name) => {
                          <div v-if="subTab === 'aprobaciones'">
                             <ApprovalTable :approvals="approvals_sent" :is-sent="true" @view="openModal" @remove="deleteApproval" />
                         </div>
-                        <div v-if="subTab === 'contratos'">
-                             <iframe src="https://elite-24-studio-sas.odoo.com/odoo/sign-documents" width="100%" height="800" frameborder="0" style="border: none;"></iframe>
+                        <div v-if="subTab === 'contratos'" class="flex items-center justify-center p-10 bg-white rounded-lg border border-dashed border-gray-300 min-h-[400px]">
+                             <div class="text-center">
+                                 <div class="bg-gray-100 p-4 rounded-full inline-block mb-4">
+                                     <i class="fas fa-file-signature text-4xl text-gray-500"></i>
+                                 </div>
+                                 <h3 class="text-lg font-medium text-gray-900 mb-2">Portal de Firmas Odoo</h3>
+                                 <p class="text-gray-500 mb-6 max-w-sm mx-auto">
+                                     Por políticas de seguridad, el panel de firmas debe abrirse en una ventana segura.
+                                 </p>
+                                 <a href="https://elite-24-studio-sas.odoo.com/odoo/sign-documents" target="_blank" 
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-700 hover:bg-yellow-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                     <i class="fas fa-external-link-alt mr-2"></i>
+                                     Abrir Panel de Firmas
+                                 </a>
+                             </div>
                         </div>
                         <div v-if="subTab === 'solicitud'">
                             <ApprovalTable :approvals="buy_approvals_sent" :is-sent="true" @view="openModal" @remove="deleteApproval" />

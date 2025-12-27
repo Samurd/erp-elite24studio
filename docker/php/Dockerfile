@@ -82,6 +82,14 @@ RUN composer dump-autoload --optimize
 COPY --from=build /app/public/build /var/www/html/public/build
 
 # ------------------------------------------------------------------------------
+# ✔ BACKUP PUBLIC ASSETS (Para restaurar en ENTRYPOINT)
+# ------------------------------------------------------------------------------
+# Creamos una copia de 'public' dentro de la imagen.
+# Como en PROD montamos un volumen en /var/www/html/public, los archivos de la imagen
+# quedan "ocultos". En el entrypoint copiaremos de este backup al volumen.
+RUN cp -R /var/www/html/public /var/www/public_backup
+
+# ------------------------------------------------------------------------------
 
 
 # ------------------------------------------------------------------------------

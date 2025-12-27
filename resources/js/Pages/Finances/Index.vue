@@ -285,10 +285,10 @@ const hasPayrollData = computed(() => {
                             </Link>
                         </li>
                         <li>
-                            <button class="bg-gradient-to-r from-black to-yellow-600 text-white px-3 py-1 rounded flex flex-col gap-1 items-center">
+                            <a href="https://muisca.dian.gov.co/WebIdentidadLogin/?ideRequest=eyJjbGllbnRJZCI6IldvMGFLQWxCN3ZSUF8xNmZyUEkxeDlacGhCRWEiLCJyZWRpcmVjdF91cmkiOiJodHRwOi8vbXVpc2NhLmRpYW4uZ292LmNvL0lkZW50aWRhZFJlc3RfTG9naW5GaWx0cm8vYXBpL3N0cy92MS9hdXRoL2NhbGxiYWNrP3JlZGlyZWN0X3VyaT1odHRwJTNBJTJGJTJGbXVpc2NhLmRpYW4uZ292LmNvJTJGV2ViQXJxdWl0ZWN0dXJhJTJGRGVmTG9naW4uZmFjZXMiLCJyZXNwb25zZVR5cGUiOiIiLCJzY29wZSI6IiIsInN0YXRlIjoiIiwibm9uY2UiOiIiLCJwYXJhbXMiOnsidGlwb1VzdWFyaW8iOiJtdWlzY2EifX0%3D" target="_blank" class="bg-gradient-to-r from-black to-yellow-600 text-white px-3 py-1 rounded flex flex-col gap-1 items-center">
                                 <span>Sistema de facturación</span>
                                 <p class="text-xs text-gray-200 font-semibold">Serás redirigido al Software de Facturacion- DIAN</p>
-                            </button>
+                            </a>
                         </li>
                     </ul>
                 </div>

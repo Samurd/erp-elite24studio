@@ -7,7 +7,43 @@ use Illuminate\Database\Eloquent\Model;
 class Team extends Model
 {
 
-    protected $fillable = ['name', 'description', 'isPublic'];
+    use \Laravel\Jetstream\HasProfilePhoto;
+
+    protected $fillable = ['name', 'description', 'isPublic', 'profile_photo_path'];
+
+    protected $appends = [
+        'profile_photo_url',
+    ];
+
+    /**
+     * Get the disk that profile photos should be stored on.
+     *
+     * @return string
+     */
+    /**
+     * Get the disk that profile photos should be stored on.
+     *
+     * @return string
+     */
+    protected function profilePhotoDisk()
+    {
+        return isset($_ENV['VAPOR_ARTIFACT_NAME']) ? 's3' : config('filesystems.default', 'public');
+    }
+
+    /**
+     * Get the URL to the team's profile photo.
+     */
+    public function profilePhotoUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::get(function () {
+            return $this->profile_photo_path
+                ? \Illuminate\Support\Facades\Storage::disk($this->profilePhotoDisk())->temporaryUrl(
+                    $this->profile_photo_path,
+                    now()->addMinutes(60)
+                )
+                : $this->defaultProfilePhotoUrl();
+        });
+    }
 
     /**
      * Relation: A Team has many members.

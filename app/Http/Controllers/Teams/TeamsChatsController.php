@@ -23,7 +23,7 @@ class TeamsChatsController extends Controller
         // Users list (excluding current)
         $users = User::where('id', '!=', Auth::id())
             ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->get(); // Get all columns to ensure profile_photo_url works correctly with appends
 
         // Load existing chats
         $chats = $this->getChats();
@@ -53,6 +53,28 @@ class TeamsChatsController extends Controller
             'initialSelectedUser' => $selectedUser, // Pass as initial prop
             'initialSelectedChat' => $selectedChat,
             'initialMessages' => $messages,
+        ]);
+    }
+
+    public function getConversation(Request $request, $userId)
+    {
+        $selectedUser = User::findOrFail($userId);
+
+        $selectedChat = Auth::user()->chatWith($userId);
+        $messages = [];
+
+        if ($selectedChat) {
+            $limit = $request->input('limit', 20);
+            $messages = $this->getMessages($selectedChat, $limit);
+        }
+
+        return response()->json([
+            'user' => $selectedUser, // Just the user model, or specific fields if needed
+            'chat' => $selectedChat ? [
+                'id' => $selectedChat->id,
+                // Add other chat fields if necessary for potential future use
+            ] : null,
+            'messages' => $messages,
         ]);
     }
 
@@ -189,6 +211,7 @@ class TeamsChatsController extends Controller
                         'id' => $otherUser->id,
                         'name' => $otherUser->name,
                         'email' => $otherUser->email,
+                        'profile_photo_url' => $otherUser->profile_photo_url,
                     ] : null,
                     'last_message' => $chat->lastMessage ? [
                         'content' => $chat->lastMessage->content,
@@ -225,6 +248,7 @@ class TeamsChatsController extends Controller
                 'id' => $msg->user->id,
                 'name' => $msg->user->name,
                 'email' => $msg->user->email,
+                'profile_photo_url' => $msg->user->profile_photo_url,
             ],
             'files' => $msg->files->map(function ($f) {
                 return [

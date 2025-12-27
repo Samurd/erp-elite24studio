@@ -6,6 +6,15 @@ chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # --------------------------------------------------------
+# 0. SINCRONIZAR ASSETS NUEVOS (Fix para volúmenes persistentes)
+# --------------------------------------------------------
+# Si existe el backup creado en el Dockerfile, lo sincronizamos al volumen montado.
+if [ -d "/var/www/public_backup" ]; then
+    echo "📦 [Entrypoint] Sincronizando nuevos assets al volumen compartido..."
+    cp -R /var/www/public_backup/. /var/www/html/public/
+fi
+
+# --------------------------------------------------------
 # 1. ESPERAR A LA BASE DE DATOS (Mantenemos la espera)
 # --------------------------------------------------------
 echo "🟡 [Entrypoint] Esperando conexión a la Base de Datos..."

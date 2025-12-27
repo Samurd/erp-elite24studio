@@ -37,27 +37,32 @@ const flashError = computed(() => page.props.flash.error);
 const owners = computed(() => props.members.filter(m => m.role_slug === 'owner'));
 const regularMembers = computed(() => props.members.filter(m => m.role_slug === 'member'));
 
+const organizedChannels = computed(() => {
+    // Ensure channels prop exists
+    if (!props.channels) return [];
+    
+    // Sort logic could go here
+    const parents = props.channels.filter(c => !c.parent_id);
+    return parents.map(p => ({
+        ...p,
+        children: props.channels.filter(c => c.parent_id === p.id)
+    }));
+});
+
 const channelForm = useForm({
     id: null,
     name: '',
     description: '',
     is_private: false,
+    parent_id: null,
 });
 
-const memberForm = useForm({
-    user_id: '',
-});
+// ... (keep existing imports and props)
 
-const teamForm = useForm({
-    name: props.team.name,
-    description: props.team.description,
-    isPublic: !!props.team.isPublic
-});
-
-// Channel Actions
-const openCreateChannelModal = () => {
+const openCreateChannelModal = (parentId = null) => {
     channelForm.reset();
     channelForm.id = null;
+    channelForm.parent_id = parentId;
     showChannelModal.value = true;
 };
 
@@ -66,8 +71,26 @@ const openEditChannelModal = (ch) => {
     channelForm.name = ch.name;
     channelForm.description = ch.description;
     channelForm.is_private = !!ch.is_private;
+    channelForm.parent_id = ch.parent_id;
     showChannelModal.value = true;
 };
+
+// ... (keep existing methods)
+
+
+
+const memberForm = useForm({
+    user_id: '',
+});
+
+const teamForm = useForm({
+    _method: 'PUT',
+    name: props.team.name,
+    description: props.team.description,
+    isPublic: !!props.team.isPublic,
+    photo: null,
+});
+
 
 const submitChannel = () => {
     if (channelForm.id) {
@@ -99,7 +122,9 @@ const leaveChannel = (chId) => {
 
 // Team Actions
 const updateTeam = () => {
-    teamForm.put(route('teams.update', props.team.id));
+    teamForm.post(route('teams.update', props.team.id), {
+        forceFormData: true,
+    });
 };
 
 const joinTeam = () => {
@@ -181,7 +206,7 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                         <div class="flex flex-col space-y-3">
                             <div class="flex items-center justify-between">
                                 <h1 class="text-xl font-bold flex items-center">
-                                    <i class="fas fa-users mr-2"></i>
+                                    <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-10 h-10 rounded-full object-cover mr-3" />
                                     {{ team.name }}
                                 </h1>
                                 <span v-if="isMember && currentUserRole" 
@@ -342,68 +367,98 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                         </button>
                                     </div>
                                     
-                                    <div v-for="ch in channels" :key="ch.id" 
-                                        class="bg-white rounded-lg shadow-sm border border-gray-200 px-2 py-2 mb-2 hover:shadow-sm transition-shadow">
-                                        <div class="flex items-center justify-between">
-                                             <div class="flex items-start space-x-4 flex-1 ml-2">
-                                                 <div class="flex-1 min-w-0">
-                                                     <div class="flex items-center space-x-3">
-                                                         <h3 class="text-lg font-semibold text-gray-900">{{ ch.name }}</h3>
-                                                         <span v-if="ch.is_private" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                             <i class="fas fa-lock mr-1"></i>Privado
-                                                         </span>
-                                                         <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                             <i class="fas fa-globe mr-1"></i>Público
-                                                         </span>
-                                                          <div class="flex items-center space-x-6 text-sm text-gray-500">
-                                                             <div class="flex items-center ml-4">
-                                                                <i class="fas fa-user-friends mr-2"></i>
-                                                                <span class="font-medium text-gray-900">{{ ch.members_count || 0 }}</span>
-                                                                <span class="ml-1">miembros</span>
+                                    <div v-for="ch in organizedChannels" :key="ch.id" class="mb-4">
+                                        <!-- Parent Channel -->
+                                        <div class="bg-white rounded-lg border border-gray-200 px-3 py-3 transition-all hover:bg-gray-100">
+                                            <div class="flex items-center justify-between">
+                                                 <div class="flex items-start space-x-4 flex-1">
+                                                     <div class="flex-1 min-w-0">
+                                                         <div class="flex items-center space-x-3">
+                                                             <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                                                 <i class="fas fa-hashtag text-gray-400 mr-1 text-sm"></i>
+                                                                 {{ ch.name }}
+                                                             </h3>
+                                                             <span v-if="ch.is_private" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                                                 <i class="fas fa-lock mr-1"></i>Privado
+                                                             </span>
+                                                         </div>
+                                                         <p v-if="ch.description" class="text-sm text-gray-500 mt-1 line-clamp-1">{{ ch.description }}</p>
+                                                     </div>
+                                                     
+                                                     <div class="flex items-center space-x-1">
+                                                         <template v-if="isMember">
+                                                             <template v-if="!ch.is_channel_member">
+                                                                 <button v-if="!ch.is_private" @click="joinChannel(ch.id)" class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors text-sm font-medium" title="Unirse">
+                                                                     Unirse
+                                                                 </button>
+                                                                 <span v-else class="text-gray-400 text-xs italic p-2"><i class="fas fa-lock"></i></span>
+                                                             </template>
+                                                             <template v-else>
+                                                                 <Link :href="route('teams.show', [team.id, ch.id])" class="text-yellow-600 hover:bg-yellow-50 p-2 rounded-lg transition-colors font-medium text-sm" title="Abrir Chat">
+                                                                     Abrir
+                                                                 </Link>
+                                                                 <button v-if="isOwner" @click="openCreateChannelModal(ch.id)" class="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors" title="Crear Subcanal">
+                                                                     <i class="fas fa-plus"></i>
+                                                                 </button>
+                                                                  <button v-if="isOwner" @click="openEditChannelModal(ch)" class="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-colors" title="Editar">
+                                                                     <i class="fas fa-pen"></i>
+                                                                 </button>
+                                                                 <button v-if="ch.is_private || isOwner" @click="isOwner ? deleteChannel(ch) : leaveChannel(ch.id)" 
+                                                                    class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors" :title="isOwner ? 'Eliminar' : 'Salir'">
+                                                                     <i class="fas" :class="isOwner ? 'fa-trash' : 'fa-sign-out-alt'"></i>
+                                                                 </button>
+                                                             </template>
+                                                         </template>
+                                                     </div>
+                                                 </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Subchannels -->
+                                        <div v-if="ch.children && ch.children.length > 0" class="ml-4 pl-6 border-l-4 border-gray-200 mt-3 space-y-3" style="margin-left: 1rem;">
+                                            <div v-for="sub in ch.children" :key="sub.id" class="bg-white rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-100 transition-all group relative">
+                                                <!-- Connector Line (Visual enhancement) -->
+                                                <!-- <div class="absolute -left-10 top-1/2 w-8 h-px bg-gray-300"></div> -->
+
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center space-x-3 flex-1">
+                                                        <div class="flex flex-col items-center">
+                                                            <i class="fas fa-level-up-alt rotate-90 text-blue-400 text-sm"></i>
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <div class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 mb-1">
+                                                                SUBCANAL DE {{ ch.name }}
                                                             </div>
-                                                          </div>
-                                                     </div>
-                                                     <div v-if="ch.description" class="text-sm text-gray-600 mt-1 line-clamp-1">
-                                                         {{ ch.description }}
-                                                     </div>
-                                                 </div>
-                                                 
-                                                 <!-- Actions -->
-                                                 <div class="flex items-center space-x-2 ml-4">
-                                                     <template v-if="isMember">
-                                                         <template v-if="!ch.is_channel_member">
-                                                             <button v-if="!ch.is_private" @click="joinChannel(ch.id)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center text-sm">
-                                                                 <i class="fas fa-sign-in-alt mr-2"></i> Unirse
-                                                             </button>
-                                                             <div v-else class="text-sm text-gray-500 bg-gray-100 px-3 py-2 rounded-lg">
-                                                                 <i class="fas fa-lock mr-2"></i> Canal Privado
-                                                             </div>
-                                                         </template>
-                                                         <template v-else>
-                                                             <Link :href="route('teams.show', [team.id, ch.id])" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center text-sm">
-                                                                 <i class="fas fa-sign-in-alt mr-2"></i> Entrar
-                                                             </Link>
-                                                             <button v-if="ch.is_private" @click="leaveChannel(ch.id)" class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="Abandonar">
-                                                                 <i class="fas fa-sign-out-alt"></i>
-                                                             </button>
-                                                             <button v-if="isOwner" @click="openEditChannelModal(ch)" class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">
-                                                                 <i class="fas fa-edit"></i>
-                                                             </button>
-                                                             <button v-if="isOwner" @click="deleteChannel(ch)" class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">
-                                                                 <i class="fas fa-trash"></i>
-                                                             </button>
-                                                         </template>
-                                                     </template>
-                                                 </div>
-                                             </div>
+                                                            <div class="flex items-center space-x-2">
+                                                                <h4 class="text-base font-medium text-gray-900">{{ sub.name }}</h4>
+                                                                <i v-if="sub.is_private" class="fas fa-lock text-xs text-gray-400"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="flex items-center space-x-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                        <template v-if="!sub.is_channel_member">
+                                                             <button v-if="!sub.is_private" @click="joinChannel(sub.id)" class="text-xs text-blue-600 hover:underline px-2">Unirse</button>
+                                                        </template>
+                                                        <template v-else>
+                                                            <Link :href="route('teams.show', [team.id, sub.id])" class="text-gray-500 hover:text-yellow-600 p-1.5"><i class="fas fa-comment-alt text-xs"></i></Link>
+                                                            <button v-if="isOwner" @click="openEditChannelModal(sub)" class="text-gray-500 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
+                                                            <button v-if="sub.is_private || isOwner" @click="isOwner ? deleteChannel(sub) : leaveChannel(sub.id)" class="text-gray-500 hover:text-red-600 p-1.5">
+                                                                <i class="fas text-xs" :class="isOwner ? 'fa-trash' : 'fa-sign-out-alt'"></i>
+                                                            </button>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
+                                    
                                     <div v-if="channels.length === 0" class="text-center py-12">
-                                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <i class="fas fa-hashtag text-gray-400 text-3xl"></i>
+                                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-hashtag text-gray-400 text-2xl"></i>
                                         </div>
-                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay canales</h3>
-                                        <p class="text-gray-500 mb-6">Este equipo aún no tiene canales.</p>
+                                        <h3 class="text-md font-medium text-gray-900">Sin canales</h3>
+                                        <p class="text-gray-500 text-sm mt-1">Crea canales para organizar las conversaciones.</p>
                                     </div>
                                 </div>
 
@@ -510,6 +565,11 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                                      <TextInput v-model="teamForm.name" class="w-full" :disabled="!isOwner" :class="{'bg-gray-100': !isOwner}" />
                                                  </div>
                                                  <div>
+                                                     <InputLabel value="Foto de Perfil" />
+                                                     <input type="file" @input="teamForm.photo = $event.target.files[0]" class="w-full" :disabled="!isOwner" />
+                                                     <InputError :message="teamForm.errors.photo" class="mt-2" />
+                                                 </div>
+                                                 <div>
                                                      <InputLabel value="Descripción" />
                                                      <textarea v-model="teamForm.description" rows="3" class="w-full border-gray-300 rounded-lg focus:ring-yellow-500" :disabled="!isOwner" :class="{'bg-gray-100': !isOwner}"></textarea>
                                                  </div>
@@ -575,6 +635,15 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                          <InputLabel value="Descripción" />
                          <TextInput v-model="channelForm.description" class="w-full mt-1" />
                      </div>
+                     <div>
+                          <InputLabel value="Canal Padre (Opcional)" />
+                          <select v-model="channelForm.parent_id" class="w-full mt-1 border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm">
+                              <option :value="null">Ninguno (Canal Principal)</option>
+                              <option v-for="ch in channels.filter(c => !c.parent_id && c.id !== channelForm.id)" :key="ch.id" :value="ch.id">
+                                  {{ ch.name }}
+                              </option>
+                          </select>
+                      </div>
                      <div>
                          <label class="flex items-center">
                              <Checkbox v-model:checked="channelForm.is_private" />

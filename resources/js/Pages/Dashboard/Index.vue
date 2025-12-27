@@ -18,7 +18,7 @@ const formatMoney = (amount) => {
         currency: 'COP',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
-    }).format(amount);
+    }).format(amount / 100);
 };
 </script>
 
