@@ -13,8 +13,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 
 const props = defineProps({
     team: Object,
-    channel: Object, // Active channel or null
-    channels: Array,
+    channels: Array, // All channels with is_channel_member flag
     members: Array,
     isMember: Boolean,
     currentUserRole: Object,
@@ -23,7 +22,21 @@ const props = defineProps({
     isPrivateTeamNonMember: Boolean,
 });
 
-const activeTab = ref(props.channel ? 'chat' : 'canales');
+const activeChannel = ref(null);
+const activeTab = ref('canales');
+
+const selectChannel = (ch) => {
+    activeChannel.value = ch;
+    activeTab.value = 'chat';
+};
+
+const deselectChannel = () => {
+    activeChannel.value = null;
+    activeTab.value = 'canales';
+};
+
+// Initialize active channel if none selected? Or maybe select First?
+// Let's keep it null to show dashboard/tabs first.
 const showAddMemberModal = ref(false);
 const showChannelModal = ref(false);
 const showAddMember = ref(false); // For inline toggle in Members tab
@@ -167,6 +180,13 @@ const confirmDeleteTeam = () => {
 
 const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
 
+const toggleAddMember = () => {
+    showAddMember.value = !showAddMember.value;
+    if (showAddMember.value) {
+        router.reload({ only: ['availableUsers'] });
+    }
+};
+
 </script>
 
 <template>
@@ -199,100 +219,19 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                 </div>
             </template>
             <template v-else>
-                <!-- Sidebar izquierda -->
-                <div class="w-64 bg-gray-100 text-gray-900 flex flex-col shrink-0 border-r border-gray-300">
-                    <!-- Header -->
-                    <div class="p-4 border-b border-gray-300">
-                        <div class="flex flex-col space-y-3">
-                            <div class="flex items-center justify-between">
-                                <h1 class="text-xl font-bold flex items-center">
-                                    <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-10 h-10 rounded-full object-cover mr-3" />
-                                    {{ team.name }}
-                                </h1>
-                                <span v-if="isMember && currentUserRole" 
-                                    class="px-2 py-1 text-xs font-medium rounded-full border flex items-center"
-                                    :class="isOwner ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 'bg-blue-100 text-blue-800 border-blue-200'">
-                                    <i class="fas mr-1 text-xs" :class="isOwner ? 'fa-crown' : 'fa-user'"></i>
-                                    {{ currentUserRole.name }}
-                                </span>
-                            </div>
-
-                            <button v-if="!isMember && team.isPublic" @click="joinTeam"
-                                class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center text-sm font-medium">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Unirse al Equipo
-                            </button>
-
-                            <button v-if="isMember" @click="leaveTeam"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center text-sm font-medium">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Salir del Equipo
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Información del equipo -->
-                    <div class="p-4 border-b border-gray-300">
-                        <div class="text-sm text-gray-600 space-y-2">
-                            <div class="flex items-center">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                <span>{{ team.isPublic ? 'Equipo Público' : 'Equipo Privado' }}</span>
-                            </div>
-                            <!-- Date handling omitted for brevity, usually parsed from ISO string -->
-                             <div class="flex items-center">
-                                <i class="fas fa-calendar mr-2"></i>
-                                <span>Creado: {{ new Date(team.created_at).toLocaleDateString() }}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-user-friends mr-2"></i>
-                                <span>{{ members.length }} miembros</span>
-                            </div>
-                            <div class="flex items-center">
-                                <i class="fas fa-hashtag mr-2"></i>
-                                <span>{{ channels.length }} canales</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Miembros del equipo (Sidebar List) -->
-                    <div class="p-4 border-b border-gray-300 flex-1 overflow-y-auto max-h-48">
-                        <h3 class="text-sm font-semibold mb-3">Miembros del Equipo</h3>
-                        <div class="space-y-2">
-                            <div v-for="member in members" :key="member.id" class="flex items-center p-2 hover:bg-gray-200 rounded-lg transition-colors group">
-                                <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3 shrink-0">
-                                    <span class="text-yellow-600 font-medium text-sm">
-                                        {{ member.name.substring(0, 2) }}
-                                    </span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-medium text-black truncate text-sm">{{ member.name }}</div>
-                                    <div class="text-xs text-gray-400 truncate">{{ member.email }}</div>
-                                </div>
-                                <!-- Chat icon (placeholder href) -->
-                                <Link v-if="member.id !== $page.props.auth.user.id" href="#" 
-                                    class="opacity-0 group-hover:opacity-100 transition-all ml-2 p-1.5 rounded text-yellow-400 hover:text-yellow-500">
-                                    <i class="far fa-comment-dots text-lg"></i>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Acciones rápidas -->
-                    <div class="p-4 space-y-2 shrink-0">
-                        <Link :href="route('teams.index')"
-                            class="flex items-center space-x-2 text-gray-500 hover:text-black transition-colors p-2 rounded hover:bg-gray-200">
-                            <i class="fas fa-arrow-left"></i>
-                            <span>Volver a equipos</span>
-                        </Link>
-                    </div>
-                </div>
-
                 <!-- Contenido principal -->
                 <div class="flex-1 overflow-hidden relative bg-white">
-                    <template v-if="channel">
+                    <template v-if="activeChannel">
                          <!-- Channel Chat wrapper -->
                          <div class="h-full flex flex-col">
                              <template v-if="!isMember">
                                  <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
                                      <!-- Not a team member lock screen -->
+                                     <div class="absolute top-4 left-4 z-20">
+                                        <button @click="deselectChannel" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </button>
+                                     </div>
                                      <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
                                          <i class="fas fa-lock text-gray-400 text-3xl"></i>
                                      </div>
@@ -302,25 +241,30 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                      </button>
                                  </div>
                              </template>
-                             <template v-else-if="!channel.is_channel_member">
+                             <template v-else-if="!activeChannel.is_channel_member">
                                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 z-10">
                                      <!-- Not a channel member lock screen -->
+                                     <div class="absolute top-4 left-4 z-20">
+                                        <button @click="deselectChannel" class="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </button>
+                                     </div>
                                      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                                          <i class="fas fa-hashtag text-blue-500 text-3xl"></i>
                                      </div>
-                                     <h3 class="text-xl font-semibold text-gray-900">Canal #{{ channel.name }}</h3>
+                                     <h3 class="text-xl font-semibold text-gray-900">Canal #{{ activeChannel.name }}</h3>
                                      <p class="text-gray-500 mt-2 mb-6 max-w-sm text-center">Únete a este canal para participar.</p>
-                                     <div v-if="channel.is_private" class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
+                                     <div v-if="activeChannel.is_private" class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm">
                                          <i class="fas fa-lock mr-2"></i> Canal Privado - Requiere invitación
                                      </div>
-                                     <button v-else @click="joinChannel(channel.id)" 
+                                     <button v-else @click="joinChannel(activeChannel.id)" 
                                         class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
                                          Unirse al Canal
                                      </button>
                                   </div>
                              </template>
                              <template v-else>
-                                 <ChannelChat :team="team" :channel="channel" />
+                                 <ChannelChat :team="team" :channel="activeChannel" @back="deselectChannel" />
                              </template>
                          </div>
                     </template>
@@ -330,9 +274,30 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                              <!-- Header superior -->
                             <div class="bg-white border-b border-gray-200 px-6 py-4">
                                 <div class="flex items-center justify-between mb-4">
-                                    <div>
+                                    <div class="flex items-center">
+                                        <div class="px-2 space-y-2 shrink-0">
+                                            <Link :href="route('teams.index')"
+                                                class="flex items-center space-x-2 text-gray-500 hover:text-black transition-colors p-2 rounded hover:bg-gray-200">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </Link>
+                                        </div>
+                                        <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-10 h-10 rounded-md object-cover mr-3" />
+                                        <div >
                                         <h2 class="text-2xl font-bold text-gray-900">{{ team.name }}</h2>
                                         <p class="text-gray-600 mt-1">Gestión del equipo</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <button v-if="!isMember && team.isPublic" @click="joinTeam"
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center text-sm font-medium">
+                                        <i class="fas fa-sign-in-alt mr-2"></i> Unirse al Equipo
+                                    </button>
+
+                                    <button v-if="isMember" @click="leaveTeam"
+                                        class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center text-sm font-medium">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Salir del Equipo
+                                    </button>
                                     </div>
                                 </div>
                                 <!-- Tabs Navigation -->
@@ -393,10 +358,10 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                                                  </button>
                                                                  <span v-else class="text-gray-400 text-xs italic p-2"><i class="fas fa-lock"></i></span>
                                                              </template>
-                                                             <template v-else>
-                                                                 <Link :href="route('teams.show', [team.id, ch.id])" class="text-yellow-600 hover:bg-yellow-50 p-2 rounded-lg transition-colors font-medium text-sm" title="Abrir Chat">
-                                                                     Abrir
-                                                                 </Link>
+                                                        <template v-else>
+                                                                <button @click="selectChannel(ch)" class="text-yellow-600 hover:bg-yellow-50 p-2 rounded-lg transition-colors font-medium text-sm" title="Abrir Chat">
+                                                                    Abrir
+                                                                </button>
                                                                  <button v-if="isOwner" @click="openCreateChannelModal(ch.id)" class="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors" title="Crear Subcanal">
                                                                      <i class="fas fa-plus"></i>
                                                                  </button>
@@ -441,7 +406,7 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                                              <button v-if="!sub.is_private" @click="joinChannel(sub.id)" class="text-xs text-blue-600 hover:underline px-2">Unirse</button>
                                                         </template>
                                                         <template v-else>
-                                                            <Link :href="route('teams.show', [team.id, sub.id])" class="text-gray-500 hover:text-yellow-600 p-1.5"><i class="fas fa-comment-alt text-xs"></i></Link>
+                                                            <button @click="selectChannel(sub)" class="text-gray-500 hover:text-yellow-600 p-1.5"><i class="fas fa-comment-alt text-xs"></i></button>
                                                             <button v-if="isOwner" @click="openEditChannelModal(sub)" class="text-gray-500 hover:text-blue-600 p-1.5"><i class="fas fa-pen text-xs"></i></button>
                                                             <button v-if="sub.is_private || isOwner" @click="isOwner ? deleteChannel(sub) : leaveChannel(sub.id)" class="text-gray-500 hover:text-red-600 p-1.5">
                                                                 <i class="fas text-xs" :class="isOwner ? 'fa-trash' : 'fa-sign-out-alt'"></i>
@@ -466,7 +431,7 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                 <div v-if="activeTab === 'miembros'">
                                      <div class="flex items-center justify-between mb-6">
                                         <h3 class="text-lg font-semibold text-gray-900">Miembros del Equipo</h3>
-                                        <button v-if="isOwner" @click="showAddMember = !showAddMember"
+                                        <button v-if="isOwner" @click="toggleAddMember"
                                             class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center">
                                             <i class="fas fa-user-plus mr-2"></i> Agregar Miembro
                                         </button>
@@ -498,7 +463,8 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                             <div v-for="member in owners" :key="member.id" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                                                 <div class="flex items-center justify-between">
                                                     <div class="flex items-center space-x-4">
-                                                        <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-full flex items-center justify-center text-white font-medium text-lg">
+                                                        <img v-if="member.profile_photo_url" :src="member.profile_photo_url" :alt="member.name" class="w-12 h-12 rounded-full object-cover" />
+                                                        <div v-else class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-full flex items-center justify-center text-white font-medium text-lg">
                                                             {{ member.name.substring(0, 2) }}
                                                         </div>
                                                         <div>
@@ -529,7 +495,8 @@ const isOwner = computed(() => props.currentUserRole?.slug === 'owner');
                                             <div v-for="member in regularMembers" :key="member.id" class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                                                 <div class="flex items-center justify-between">
                                                     <div class="flex items-center space-x-4">
-                                                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-lg">
+                                                        <img v-if="member.profile_photo_url" :src="member.profile_photo_url" :alt="member.name" class="w-12 h-12 rounded-full object-cover" />
+                                                        <div v-else class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium text-lg">
                                                             {{ member.name.substring(0, 2) }}
                                                         </div>
                                                         <div>

@@ -8,6 +8,9 @@ use App\Models\TeamRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Illuminate\Support\Str;
 
@@ -18,9 +21,8 @@ class TeamController extends Controller
         $currentUserId = Auth::id();
         $query = Team::with([
             'members' => function ($q) use ($currentUserId) {
-                $q->where('user_id', $currentUserId);
-            },
-            'channels'
+                $q->where('user_id', $currentUserId)->select('users.id'); // Only need ID for existence check
+            }
         ])->withCount([
                     'members' => function ($q) {
                         $q->select(\Illuminate\Support\Facades\DB::raw('count(distinct users.id)'));
@@ -80,10 +82,12 @@ class TeamController extends Controller
         return redirect()->route('teams.show', $team->id)->with('message', 'Equipo creado exitosamente.');
     }
 
-    public function show(Team $team, $channel = null)
+    public function show(Request $request, Team $team)
     {
         $userId = Auth::id();
-        $team->load(['members']); // Ensure members are loaded for checks
+        $channelId = $request->input('channel');
+
+        $team->load(['members:id,name,email,profile_photo_path', 'channels']); // Optimized loading
 
         // Membership check
         $member = $team->members->where('id', $userId)->first();
@@ -111,6 +115,7 @@ class TeamController extends Controller
                     'id' => $m->id,
                     'name' => $m->name,
                     'email' => $m->email,
+                    'profile_photo_url' => $m->profile_photo_url,
                     'role_id' => $m->pivot->role_id,
                     'role_name' => $role ? $role->name : 'Sin rol',
                     'role_slug' => $role ? $role->slug : null,
@@ -121,8 +126,8 @@ class TeamController extends Controller
 
         // Load Channel if specific one requested
         $activeChannel = null;
-        if ($channel) {
-            $activeChannel = $team->channels()->findOrFail($channel);
+        if ($channelId) {
+            $activeChannel = $team->channels()->findOrFail($channelId);
 
             $isChannelMember = false;
             if ($isMember) {
@@ -142,46 +147,52 @@ class TeamController extends Controller
 
 
 
-        // Get Channels with logic similar to Livewire Show.php
-        $channels = $team->channels()
-            ->withCount('messages')
-            ->get()
-            ->map(function ($ch) use ($isMember, $userId, $members) {
-                $isChannelMember = false;
-                if ($isMember) {
-                    if (!$ch->is_private) {
-                        $isChannelMember = true;
-                    } else {
-                        $isChannelMember = $ch->members()->where('user_id', $userId)->exists();
-                    }
-                }
+        // 1. Get User's Channel Memberships for this team in ONE query
+        $userChannelIds = DB::table('channel_user')
+            ->where('user_id', $userId)
+            ->whereIn('channel_id', $team->channels->pluck('id'))
+            ->pluck('channel_id')
+            ->toArray();
 
-                return [
-                    'id' => $ch->id,
-                    'name' => $ch->name,
-                    'description' => $ch->description,
-                    'is_private' => $ch->is_private,
-                    'members_count' => $ch->is_private ? $ch->members()->count() : count($members),
-                    'is_channel_member' => $isChannelMember,
-                    'parent_id' => $ch->parent_id,
-                ];
-            });
+        // 2. Prepare Channels Data
+        $isOwner = $currentUserRole && $currentUserRole->slug === 'owner';
+
+        $channels = $team->channels->map(function ($ch) use ($isMember, $userChannelIds, $members, $isOwner) {
+            $isChannelMember = false;
+            if ($isMember) {
+                if (!$ch->is_private || $isOwner) {
+                    $isChannelMember = true;
+                } else {
+                    // Check against loaded IDs
+                    $isChannelMember = in_array($ch->id, $userChannelIds);
+                }
+            }
+
+            return [
+                'id' => $ch->id,
+                'name' => $ch->name,
+                'description' => $ch->description,
+                'is_private' => $ch->is_private,
+                'members_count' => $ch->is_private ? $ch->members()->count() : count($members),
+                'is_channel_member' => $isChannelMember,
+                'parent_id' => $ch->parent_id,
+            ];
+        });
 
         $teamRoles = TeamRole::all();
 
-        // Available Users (simplified for now, ideally AJAX search)
+        // Available Users
         $memberIds = collect($members)->pluck('id')->toArray();
-        $availableUsers = User::whereNotIn('id', $memberIds)->orderBy('name')->get(['id', 'name', 'email']);
 
         return Inertia::render('Teams/Show', [
             'team' => $team,
-            'channel' => $activeChannel,
+            'channel' => null, // Deprecated, client-side nav uses initial null or logic
             'channels' => $channels,
             'members' => $members,
             'isMember' => $isMember,
             'currentUserRole' => $currentUserRole,
             'teamRoles' => $teamRoles,
-            'availableUsers' => $availableUsers,
+            'availableUsers' => Inertia::lazy(fn() => User::whereNotIn('id', $memberIds)->orderBy('name')->get(['id', 'name', 'email'])),
             'isPrivateTeamNonMember' => false,
         ]);
     }

@@ -25,7 +25,7 @@ Route::middleware('can-area:view,teams')
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
-            Route::get('/{team}/{channel?}', 'show')->where('channel', '[0-9]+')->name('show');
+            Route::get('/{team}', 'show')->name('show');
             Route::get('/{team}/edit', 'edit')->name('edit'); // Usually 'edit' is GET
             // Route::put('/{team}', 'update')->name('update'); // Standard, but check if we need separate route entry or if Resource covers it. 
             // The user wanted specific lines replaced. I'll add the necessary method routes.

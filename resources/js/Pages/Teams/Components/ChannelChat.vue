@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 
 // We might need a generic file component or use the one from Cloud module
 import EmojiPicker from 'vue3-emoji-picker'; 
@@ -12,27 +12,74 @@ const props = defineProps({
     team: Object,
 });
 
+const emit = defineEmits(['back']);
+
 const messages = ref([]);
 const optimisticMessages = ref([]);
 const tempMessage = ref('');
 const isLoadingOld = ref(false);
+const isLoadingMessages = ref(true);
 const messagesContainer = ref(null);
 const sentinel = ref(null);
 const showEmojiPicker = ref(false);
 const fileInput = ref(null);
 const chatUploads = ref([]); // File objects
 
+watch(() => props.channel, (newChannel, oldChannel) => {
+    if (newChannel && newChannel.id !== oldChannel?.id) {
+        messages.value = [];
+        loadMessages();
+        // Re-init Echo listener
+        if (echoChannel) echoChannel.stopListening('.MessageSent');
+        setupEcho();
+    }
+});
+
+const setupEcho = () => {
+     if (window.Echo) {
+        echoChannel = window.Echo.private(`teams.${props.team.id}.channels.${props.channel.id}`)
+            .listen('.MessageSent', (e) => {
+                const msg = e.message; 
+                if (msg.user_id !== usePage().props.auth.user.id) {
+                     messages.value.push({
+                        id: msg.id,
+                        content: msg.content,
+                        user_id: msg.user_id,
+                        created_at: msg.created_at,
+                        user: msg.user,
+                        files: msg.files || []
+                     });
+                     scrollToBottom();
+                } else {
+                     messages.value.push({
+                        id: msg.id,
+                        content: msg.content,
+                        user_id: msg.user_id,
+                        created_at: msg.created_at,
+                        user: msg.user,
+                        files: msg.files || []
+                     });
+                     optimisticMessages.value = []; 
+                     scrollToBottom();
+                }
+            });
+    }
+}
+
 const loadMessages = async () => {
     // Initial fetch via API to avoid massive payload on Inertia load if desired, 
     // OR we can pass initial messages via props (which might slow down initial render).
     // The Livewire component loaded 20 initially.
     // Let's assume we fetch them on mount to keep page load fast.
+    isLoadingMessages.value = true;
     try {
         const response = await axios.get(route('teams.channels.messages', [props.team.id, props.channel.id]));
         messages.value = response.data;
         scrollToBottom();
     } catch (e) {
         console.error("Error loading messages", e);
+    } finally {
+        isLoadingMessages.value = false;
     }
 };
 
@@ -154,43 +201,7 @@ onMounted(() => {
     
     if (sentinel.value) observer.observe(sentinel.value);
 
-    // Echo
-    if (window.Echo) {
-        echoChannel = window.Echo.private(`teams.${props.team.id}.channels.${props.channel.id}`)
-            .listen('.MessageSent', (e) => {
-                const msg = e.message; 
-                // Don't add if it's mine (handled optimistically), 
-                // BUT we need to replace optimistic with real one to get ID/Timestamp correct?
-                // Or just ignore if user_id matches me.
-                if (msg.user_id !== usePage().props.auth.user.id) {
-                     messages.value.push({
-                        id: msg.id,
-                        content: msg.content,
-                        user_id: msg.user_id,
-                        created_at: msg.created_at,
-                        user: msg.user,
-                        files: msg.files || []
-                     });
-                     scrollToBottom();
-                } else {
-                    // It's mine. Remove optimistic, push real?
-                    // Or keep optimistic?
-                    // Simple approach: Remove matching optimistic (by content?) and push real.
-                    // Or just let Vue reactivity handle it if we structured it well.
-                    // Let's just push real and filter optimistic.
-                     messages.value.push({
-                        id: msg.id,
-                        content: msg.content,
-                        user_id: msg.user_id,
-                        created_at: msg.created_at,
-                        user: msg.user,
-                        files: msg.files || []
-                     });
-                     optimisticMessages.value = []; // Clear all optimistic for simplicity/safety
-                     scrollToBottom();
-                }
-            });
-    }
+    setupEcho();
 });
 
 onUnmounted(() => {
@@ -204,6 +215,12 @@ onUnmounted(() => {
         <!-- Header -->
         <div class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
             <div class="flex items-center">
+                 <button @click="$emit('back')" class="mr-4 text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors md:hidden">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <button @click="$emit('back')" class="mr-4 text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors hidden md:block">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
                 <div v-if="team" class="flex items-center mr-4 pr-4 border-r border-gray-200">
                     <img v-if="team.profile_photo_url" :src="team.profile_photo_url" :alt="team.name" class="w-8 h-8 rounded-md object-cover mr-2" />
                     <div v-else class="w-8 h-8 bg-yellow-100 text-yellow-700 rounded-md flex items-center justify-center font-bold text-xs mr-2">
@@ -228,22 +245,42 @@ onUnmounted(() => {
         <div ref="messagesContainer" class="flex-1 p-6 overflow-y-auto space-y-6">
             <div ref="sentinel" class="h-1 w-full"></div>
             
+            <div v-if="isLoadingMessages" class="space-y-6">
+                <div v-for="i in 3" :key="i" class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 animate-pulse shrink-0"></div>
+                    <div class="space-y-2 flex-1">
+                        <div class="flex items-center space-x-2">
+                           <div class="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+                           <div class="h-3 bg-gray-200 rounded w-12 animate-pulse"></div>
+                        </div>
+                        <div class="h-10 bg-gray-200 rounded-2xl rounded-tl-none w-3/4 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="isLoadingOld" class="flex justify-center py-4">
                 <i class="fas fa-spinner fa-spin text-gray-400"></i>
             </div>
             
             <div v-for="msg in messages" :key="msg.id" 
-                class="flex items-start space-x-3" 
+                class="flex items-start space-x-3 group" 
                 :class="{'justify-end': msg.user_id === $page.props.auth.user.id}">
                 
-                <div v-if="msg.user_id !== $page.props.auth.user.id" 
-                    class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold shrink-0">
-                    {{ msg.user.name.substring(0, 2) }}
+                <div v-if="msg.user_id !== $page.props.auth.user.id">
+                    <img v-if="msg.user.profile_photo_url" :src="msg.user.profile_photo_url" :alt="msg.user.name" class="w-10 h-10 rounded-full object-cover shrink-0" />
+                    <div v-else class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold shrink-0">
+                        {{ msg.user.name.substring(0, 2) }}
+                    </div>
                 </div>
                 
                 <div class="max-w-[70%]">
-                    <div v-if="msg.user_id !== $page.props.auth.user.id" class="text-xs text-gray-500 mb-1 px-1">
-                        {{ msg.user.name }}
+                    <div v-if="msg.user_id !== $page.props.auth.user.id" class="flex items-center text-xs text-gray-500 mb-1 px-1">
+                        <span class="font-medium mr-2">{{ msg.user.name }}</span>
+                        <Link :href="route('teams.chats', msg.user_id)" 
+                            class="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-yellow-600 p-1 rounded" 
+                            title="Enviar mensaje directo">
+                            <i class="far fa-comment-dots"></i>
+                        </Link>
                     </div>
                     
                     <div class="px-4 py-2 rounded-2xl shadow-sm text-sm"
@@ -270,9 +307,11 @@ onUnmounted(() => {
                     </div>
                 </div>
                 
-                <div v-if="msg.user_id === $page.props.auth.user.id" 
-                    class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold shrink-0 ml-3">
-                    {{ $page.props.auth.user.name.substring(0, 2) }}
+                <div v-if="msg.user_id === $page.props.auth.user.id" class="ml-3 shrink-0">
+                    <img v-if="$page.props.auth.user.profile_photo_url" :src="$page.props.auth.user.profile_photo_url" :alt="$page.props.auth.user.name" class="w-10 h-10 rounded-full object-cover" />
+                    <div v-else class="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold">
+                        {{ $page.props.auth.user.name.substring(0, 2) }}
+                    </div>
                 </div>
             </div>
             

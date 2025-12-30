@@ -23,7 +23,7 @@ Route::get("/share/{token}/{folder?}", PublicShareIndex::class)->name(
 Route::middleware([
     "auth:sanctum",
     config("jetstream.auth_session"),
-    "verified",
+    // "verified",
 ])->group(function () {
 
     Route::get('/files/{file}/download', [FileController::class, 'download'])->name('files.download');
