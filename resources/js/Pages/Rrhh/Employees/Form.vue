@@ -3,6 +3,12 @@ import { useForm, Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ModelAttachmentsCreator from '@/Components/Cloud/ModelAttachmentsCreator.vue'
 import ModelAttachments from '@/Components/Cloud/ModelAttachments.vue'
+import DialogModal from '@/Components/DialogModal.vue'
+import SecondaryButton from '@/Components/SecondaryButton.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import TextInput from '@/Components/TextInput.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import InputError from '@/Components/InputError.vue'
 import { computed, ref } from 'vue'
 
 const props = defineProps({
@@ -73,6 +79,31 @@ const deleteEmployee = () => {
     if (confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
         router.delete(route('rrhh.employees.destroy', props.employee.id))
     }
+}
+
+// Department Modal
+const showDepartmentModal = ref(false)
+const departmentForm = useForm({
+    name: '',
+    description: '',
+})
+
+const openDepartmentModal = () => {
+    departmentForm.reset()
+    showDepartmentModal.value = true
+}
+
+const submitDepartment = () => {
+    departmentForm.post(route('rrhh.departments.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showDepartmentModal.value = false
+            departmentForm.reset()
+            // The Departments prop will be refreshed automatically by Inertia if preserved, 
+            // but we might need to manually reload or ensure prop update if we are not careful.
+            // Inertia's "back()" in controller should refresh props if we are on the same page.
+        }
+    })
 }
 </script>
 
@@ -160,7 +191,12 @@ const deleteEmployee = () => {
                     </div>
 
                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Departamento <span class="text-red-500">*</span></label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-sm font-medium text-gray-700">Departamento <span class="text-red-500">*</span></label>
+                             <button type="button" @click="openDepartmentModal" class="text-xs text-blue-600 hover:text-blue-800 hover:underline">
+                                 + Crear
+                             </button>
+                        </div>
                         <select v-model="form.department_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500">
                             <option value="">Seleccionar departamento</option>
                             <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
@@ -261,12 +297,12 @@ const deleteEmployee = () => {
                  <div v-show="activeTab === 'contact'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2 text-lg font-medium text-gray-800 border-b pb-2 mb-2">Contacto de Emergencia</div>
                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Contacto <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Contacto</label>
                         <input v-model="form.emergency_contact_name" type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500" />
                          <div v-if="form.errors.emergency_contact_name" class="text-red-500 text-sm mt-1">{{ form.errors.emergency_contact_name }}</div>
                     </div>
                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono Contacto <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono Contacto</label>
                         <input v-model="form.emergency_contact_phone" type="text" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500" />
                          <div v-if="form.errors.emergency_contact_phone" class="text-red-500 text-sm mt-1">{{ form.errors.emergency_contact_phone }}</div>
                     </div>
@@ -327,4 +363,33 @@ const deleteEmployee = () => {
             </form>
         </div>
     </AppLayout>
+
+    <!-- Create Department Modal -->
+    <DialogModal :show="showDepartmentModal" @close="showDepartmentModal = false">
+        <template #title>
+             Crear Nuevo Departamento
+        </template>
+        <template #content>
+            <div class="space-y-4">
+                <div>
+                    <InputLabel for="dept_name" value="Nombre del Departamento" />
+                    <TextInput id="dept_name" v-model="departmentForm.name" type="text" class="mt-1 block w-full" placeholder="Ej. Recursos Humanos" />
+                    <InputError :message="departmentForm.errors.name" class="mt-2" />
+                </div>
+                 <div>
+                    <InputLabel for="dept_desc" value="Descripción (Opcional)" />
+                    <textarea id="dept_desc" v-model="departmentForm.description" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500" rows="3"></textarea>
+                    <InputError :message="departmentForm.errors.description" class="mt-2" />
+                </div>
+            </div>
+        </template>
+        <template #footer>
+            <SecondaryButton @click="showDepartmentModal = false">
+                Cancelar
+            </SecondaryButton>
+             <PrimaryButton class="ml-3" @click="submitDepartment" :disabled="departmentForm.processing">
+                Crear Departamento
+            </PrimaryButton>
+        </template>
+    </DialogModal>
 </template>

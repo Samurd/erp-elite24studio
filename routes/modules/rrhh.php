@@ -62,6 +62,10 @@ Route::middleware('can-area:view,finanzas')
     ->group(function () {
         Route::get('/', [\App\Http\Controllers\Modules\RrhhController::class, 'index'])->name('index');
 
+        Route::prefix('departments')->name('departments.')->group(function () {
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhDepartmentsController::class, 'store'])->name('store');
+        });
+
         Route::prefix('contracts')->name('contracts.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'index'])->name('index');
             Route::get('/create', [\App\Http\Controllers\Modules\RrhhContractsController::class, 'create'])->name('create');
@@ -92,8 +96,10 @@ Route::middleware('can-area:view,finanzas')
         });
 
         Route::prefix('applicants')->name('applicants.')->group(function () {
-            Route::get('/create', ApplicantsCreate::class)->name('create');
-            Route::get('/{applicant}/edit', ApplicantsUpdate::class)->name('edit');
+            Route::get('/create', [\App\Http\Controllers\Modules\RrhhApplicantsController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Modules\RrhhApplicantsController::class, 'store'])->name('store');
+            Route::get('/{applicant}/edit', [\App\Http\Controllers\Modules\RrhhApplicantsController::class, 'edit'])->name('edit');
+            Route::put('/{applicant}', [\App\Http\Controllers\Modules\RrhhApplicantsController::class, 'update'])->name('update');
         });
 
         Route::prefix('interviews')->name('interviews.')->group(function () {

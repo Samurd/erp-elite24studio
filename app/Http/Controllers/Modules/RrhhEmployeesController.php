@@ -145,8 +145,8 @@ class RrhhEmployeesController extends Controller
             'disability_details' => 'required_if:has_disability,true|nullable|string|max:500',
 
             // Emergency Contact
-            'emergency_contact_name' => 'required|string|max:255',
-            'emergency_contact_phone' => 'required|string|max:20',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:20',
 
             // Education
             'education_type_id' => 'nullable|exists:tags,id',

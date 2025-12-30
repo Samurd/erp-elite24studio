@@ -1,8 +1,14 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
+import DialogModal from '@/Components/DialogModal.vue'
+import SecondaryButton from '@/Components/SecondaryButton.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import TextInput from '@/Components/TextInput.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import InputError from '@/Components/InputError.vue'
 import { debounce } from 'lodash'
 
 const props = defineProps({
@@ -32,6 +38,28 @@ const deleteEmployee = (id) => {
         router.delete(route('rrhh.employees.destroy', id))
     }
 }
+
+// Department Modal
+const showDepartmentModal = ref(false)
+const departmentForm = useForm({
+    name: '',
+    description: '',
+})
+
+const openDepartmentModal = () => {
+    departmentForm.reset()
+    showDepartmentModal.value = true
+}
+
+const submitDepartment = () => {
+    departmentForm.post(route('rrhh.departments.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showDepartmentModal.value = false
+            departmentForm.reset()
+        }
+    })
+}
 </script>
 
 <template>
@@ -43,12 +71,20 @@ const deleteEmployee = (id) => {
                     <h1 class="text-2xl font-bold text-gray-800">Empleados</h1>
                     <p class="text-gray-600 mt-1">Gestión de personal - Total: {{ totalEmployees }}</p>
                 </div>
-                <Link
+                <div class="flex gap-2">
+                    <button
+                        @click="openDepartmentModal"
+                        class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                    >
+                        <i class="fas fa-building mr-2"></i> Nuevo Depto
+                    </button>
+                    <Link
                     :href="route('rrhh.employees.create')"
                     class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center"
                 >
                     <i class="fas fa-plus mr-2"></i> Nuevo Empleado
                 </Link>
+                </div>
             </div>
 
             <!-- Filters -->
@@ -143,4 +179,33 @@ const deleteEmployee = (id) => {
             </div>
         </div>
     </AppLayout>
+
+    <!-- Create Department Modal -->
+    <DialogModal :show="showDepartmentModal" @close="showDepartmentModal = false">
+        <template #title>
+             Crear Nuevo Departamento
+        </template>
+        <template #content>
+            <div class="space-y-4">
+                <div>
+                    <InputLabel for="dept_name" value="Nombre del Departamento" />
+                    <TextInput id="dept_name" v-model="departmentForm.name" type="text" class="mt-1 block w-full" placeholder="Ej. Recursos Humanos" />
+                    <InputError :message="departmentForm.errors.name" class="mt-2" />
+                </div>
+                 <div>
+                    <InputLabel for="dept_desc" value="Descripción (Opcional)" />
+                    <textarea id="dept_desc" v-model="departmentForm.description" class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-yellow-500 focus:border-yellow-500" rows="3"></textarea>
+                    <InputError :message="departmentForm.errors.description" class="mt-2" />
+                </div>
+            </div>
+        </template>
+        <template #footer>
+            <SecondaryButton @click="showDepartmentModal = false">
+                Cancelar
+            </SecondaryButton>
+             <PrimaryButton class="ml-3" @click="submitDepartment" :disabled="departmentForm.processing">
+                Crear Departamento
+            </PrimaryButton>
+        </template>
+    </DialogModal>
 </template>
