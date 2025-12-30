@@ -26,7 +26,7 @@ const form = useForm({
     contact_type_id: props.contact ? props.contact.contact_type_id : '',
     relation_type_id: props.contact ? props.contact.relation_type_id : '',
     status_id: props.contact ? props.contact.status_id : '',
-    email: props.contact ? props.contact.email : '',
+    status_id: props.contact ? props.contact.status_id : '',
     email_personal: props.contact ? props.contact.email_personal : '',
     email_corporativo: props.contact ? props.contact.email_corporativo : '',
     address: props.contact ? props.contact.address : '',
@@ -165,13 +165,6 @@ const deleteTag = (tag) => {
                              <option v-for="opt in options.states" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
                         </select>
                         <InputError :message="form.errors.status_id" class="mt-1" />
-                    </div>
-
-                    <!-- Email -->
-                    <div>
-                        <InputLabel for="email" value="Correo electrónico" />
-                        <TextInput id="email" type="email" v-model="form.email" class="w-full mt-1" required />
-                        <InputError :message="form.errors.email" class="mt-1" />
                     </div>
 
                     <!-- Email Personal -->

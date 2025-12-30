@@ -146,7 +146,7 @@ const formatDate = (dateString) => {
                             <thead class="text-xs text-white uppercase bg-gradient-to-r from-black via-yellow-700 to-amber-500">
                                 <tr>
                                     <th class="px-6 py-3">Nombre</th>
-                                    <th class="px-6 py-3">Email</th>
+                                    <th class="px-6 py-3">Etiqueta</th>
                                     <th class="px-6 py-3">Email Personal</th>
                                     <th class="px-6 py-3">Email Corporativo</th>
                                     <th class="px-6 py-3">Empresa</th>
@@ -158,7 +158,12 @@ const formatDate = (dateString) => {
                             <tbody>
                                 <tr v-for="contact in contacts.data" :key="contact.id" class="border-b hover:bg-gray-50">
                                     <td class="px-6 py-3">{{ contact.name }}</td>
-                                    <td class="px-6 py-3">{{ contact.email }}</td>
+                                    <td class="px-6 py-3">
+                                        <span v-if="contact.label" class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold" :style="{ backgroundColor: contact.label.color ? contact.label.color + '20' : '#f3f4f6', color: contact.label.color || '#1f2937' }">
+                                            {{ contact.label.name }}
+                                        </span>
+                                        <span v-else>—</span>
+                                    </td>
                                     <td class="px-6 py-3">{{ contact.email_personal || '—' }}</td>
                                     <td class="px-6 py-3">{{ contact.email_corporativo || '—' }}</td>
                                     <td class="px-6 py-3">{{ contact.company || '—' }}</td>
@@ -206,10 +211,6 @@ const formatDate = (dateString) => {
                         <div>
                             <p class="text-sm text-gray-500">Nombre</p>
                             <p class="font-medium text-gray-900">{{ selectedContact.name }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">Email</p>
-                            <p class="font-medium text-gray-900">{{ selectedContact.email }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Email Personal</p>

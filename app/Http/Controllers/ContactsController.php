@@ -19,7 +19,8 @@ class ContactsController extends Controller
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', "%{$request->search}%")
-                    ->orWhere('email', 'like', "%{$request->search}%");
+                    ->orWhere('email_personal', 'like', "%{$request->search}%")
+                    ->orWhere('email_corporativo', 'like', "%{$request->search}%");
             });
         }
 
@@ -65,7 +66,6 @@ class ContactsController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:contacts',
             'email_personal' => 'nullable|email',
             'email_corporativo' => 'nullable|email',
             'company' => 'required|string|max:255',
@@ -100,7 +100,6 @@ class ContactsController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:contacts,email,' . $contact->id,
             'email_personal' => 'nullable|email',
             'email_corporativo' => 'nullable|email',
             'company' => 'required|string|max:255',
