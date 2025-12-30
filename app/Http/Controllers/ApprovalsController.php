@@ -161,6 +161,90 @@ class ApprovalsController extends Controller
         return redirect()->route('approvals.index')->with('success', 'Solicitud creada correctamente');
     }
 
+    public function update(Request $request, Approval $approval, UploadFileAction $uploader, GetOrCreateFolderAction $folderMaker, NotificationService $notificationService, \App\Actions\Cloud\Files\LinkFileAction $linker)
+    {
+        // 1. Permission Check
+        if (Auth::id() !== $approval->created_by_id && !Auth::user()->can('aprobaciones.update')) {
+            abort(403);
+        }
+
+        // 2. Validate
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'buy' => 'boolean',
+            'approvers' => 'required|array|min:1',
+            'approvers.*' => 'exists:users,id',
+            'priority_id' => 'required|exists:tags,id',
+            'description' => 'nullable|string',
+            'all_approvers' => 'boolean',
+            'files.*' => 'file|max:51200',
+            'pending_file_ids' => 'nullable|array',
+            'pending_file_ids.*' => 'integer|exists:files,id',
+        ]);
+
+        $statusPending = Tag::whereHas('category', fn($q) => $q->where('slug', 'estado_aprobacion'))
+            ->where('name', 'En espera')->first();
+
+        // 3. Update Approval
+        $approval->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'buy' => $request->buy ?? false,
+            'status_id' => $statusPending->id, // Reset status
+            'priority_id' => $request->priority_id,
+            'all_approvers' => $request->all_approvers ?? false,
+            'approved_at' => null, // Reset timestamps
+            'rejected_at' => null,
+        ]);
+
+        // 4. Reset Approvers (Delete all and recreate)
+        $approval->approvers()->delete();
+
+        foreach ($request->approvers as $userId) {
+            $approval->approvers()->create([
+                'user_id' => $userId,
+                'status_id' => $statusPending->id,
+            ]);
+        }
+
+        // 5. Files handling
+        if ($request->hasFile('files')) {
+            $area = Area::where('slug', 'aprobaciones')->first();
+            // Ensure folder exists (might have been renamed if name changed, but keeping it simple for now)
+            $folder = $folderMaker->execute($approval->name, null);
+            $uploader->execute($request->file('files'), $approval, $folder->id, $area->id);
+        }
+
+        if ($request->has('pending_file_ids')) {
+            $area = Area::where('slug', 'aprobaciones')->first();
+            foreach ($request->pending_file_ids as $fileId) {
+                $file = \App\Models\File::find($fileId);
+                if ($file) {
+                    $linker->execute($file, $approval, $area->id);
+                }
+            }
+        }
+
+        // 6. Notifications (Notify again since it is a "new" request effectively)
+        foreach ($approval->approvers as $approver) {
+            $notificationService->createImmediate(
+                user: $approver->user,
+                title: 'Solicitud Actualizada (' . $approval->priority->name . ')',
+                message: 'Se te ha asignado (nuevamente) como aprobador: ' . $approval->name,
+                data: [
+                    'approval_name' => $approval->name,
+                    'priority' => $approval->priority->name,
+                    'requester' => Auth::user()->name,
+                ],
+                notifiable: $approval,
+                sendEmail: true,
+                emailTemplate: 'emails.approval-assigned'
+            );
+        }
+
+        return redirect()->route('approvals.index')->with('success', 'Solicitud actualizada y re-enviada correctamente');
+    }
+
     public function show(Approval $approval)
     {
         // For AJAX modal

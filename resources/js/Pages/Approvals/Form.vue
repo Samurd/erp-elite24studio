@@ -9,6 +9,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import ModelAttachments from '@/Components/Cloud/ModelAttachments.vue';
 import ModelAttachmentsCreator from '@/Components/Cloud/ModelAttachmentsCreator.vue';
+import RichSelect from '@/Components/RichSelect.vue';
 
 const props = defineProps({
     priorities: Array,
@@ -83,10 +84,14 @@ const handleFileChange = (e) => {
                         <!-- Approvers (Multi Select) -->
                         <div>
                             <InputLabel for="approvers" value="Aprobadores *" />
-                             <select id="approvers" v-model="form.approvers" multiple class="mt-1 block w-full border-gray-300 focus:border-yellow-500 focus:ring-yellow-500 rounded-md shadow-sm h-32">
-                                <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500">Mantén presionado Ctrl (Winddows) o Cmd (Mac) para seleccionar múltiples</p>
+                             <RichSelect
+                                id="approvers"
+                                v-model="form.approvers"
+                                :options="users"
+                                multiple
+                                placeholder="Seleccionar aprobadores..."
+                                class="mt-1 block w-full"
+                            />
                             <InputError :message="form.errors.approvers" class="mt-2" />
                         </div>
 

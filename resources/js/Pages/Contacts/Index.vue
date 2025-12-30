@@ -10,7 +10,7 @@ import debounce from 'lodash/debounce';
 
 const props = defineProps({
     contacts: Object,
-    states: Array,
+    labels: Array,
     users: Array,
     filters: Object,
 });
@@ -18,26 +18,26 @@ const props = defineProps({
 // --- Filter Logic ---
 const search = ref(props.filters.search || '');
 const empresa = ref(props.filters.empresa || '');
-const estado = ref(props.filters.estado || '');
+const etiqueta = ref(props.filters.etiqueta || '');
 const responsable = ref(props.filters.responsable || '');
 
 const updateFilters = debounce(() => {
     router.get(route('contacts.index'), {
         search: search.value,
         empresa: empresa.value,
-        estado: estado.value,
+        etiqueta: etiqueta.value,
         responsable: responsable.value,
     }, { preserveState: true, preserveScroll: true });
 }, 300);
 
-watch([search, empresa, estado, responsable], () => {
+watch([search, empresa, responsable, etiqueta], () => {
     updateFilters();
 });
 
 const resetFilters = () => {
     search.value = '';
     empresa.value = '';
-    estado.value = '';
+    etiqueta.value = '';
     responsable.value = '';
     // Watcher will trigger update
 };
@@ -107,10 +107,12 @@ const formatDate = (dateString) => {
                         <input type="text" v-model="empresa" placeholder="Empresa"
                             class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-yellow-500 focus:border-yellow-500">
 
-                        <select v-model="estado"
+
+
+                        <select v-model="etiqueta"
                             class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-yellow-500 focus:border-yellow-500">
-                            <option value="">Estado</option>
-                            <option v-for="state in states" :key="state.id" :value="state.id">{{ state.name }}</option>
+                            <option value="">Etiqueta</option>
+                            <option v-for="label in labels" :key="label.id" :value="label.id">{{ label.name }}</option>
                         </select>
 
                         <select v-model="responsable"

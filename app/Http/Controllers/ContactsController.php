@@ -27,26 +27,29 @@ class ContactsController extends Controller
             $query->where('company', 'like', "%{$request->empresa}%");
         }
 
-        if ($request->estado) {
-            $query->where('status_id', $request->estado);
-        }
+
 
         if ($request->responsable) {
             $query->where('responsible_id', $request->responsable);
         }
 
+        if ($request->etiqueta) {
+            $query->where('label_id', $request->etiqueta);
+        }
+
         $contacts = $query->latest()->paginate(10)->withQueryString();
 
         // Data for filters
-        $stateCategory = TagCategory::where('slug', 'estado_contacto')->first();
-        $states = $stateCategory ? Tag::where('category_id', $stateCategory->id)->get() : [];
+        $labelCategory = TagCategory::where('slug', 'etiqueta_contacto')->first();
+        $labels = $labelCategory ? Tag::where('category_id', $labelCategory->id)->get() : [];
+
         $users = \App\Services\CommonDataCacheService::getAllUsers();
 
         return Inertia::render('Contacts/Index', [
             'contacts' => $contacts,
-            'states' => $states,
+            'labels' => $labels,
             'users' => $users,
-            'filters' => $request->only(['search', 'empresa', 'estado', 'responsable']),
+            'filters' => $request->only(['search', 'empresa', 'responsable', 'etiqueta']),
         ]);
     }
 
