@@ -147,6 +147,8 @@ const formatDate = (dateString) => {
                                 <tr>
                                     <th class="px-6 py-3">Nombre</th>
                                     <th class="px-6 py-3">Email</th>
+                                    <th class="px-6 py-3">Email Personal</th>
+                                    <th class="px-6 py-3">Email Corporativo</th>
                                     <th class="px-6 py-3">Empresa</th>
                                     <th class="px-6 py-3">Estado</th>
                                     <th class="px-6 py-3">Responsable</th>
@@ -157,6 +159,8 @@ const formatDate = (dateString) => {
                                 <tr v-for="contact in contacts.data" :key="contact.id" class="border-b hover:bg-gray-50">
                                     <td class="px-6 py-3">{{ contact.name }}</td>
                                     <td class="px-6 py-3">{{ contact.email }}</td>
+                                    <td class="px-6 py-3">{{ contact.email_personal || '—' }}</td>
+                                    <td class="px-6 py-3">{{ contact.email_corporativo || '—' }}</td>
                                     <td class="px-6 py-3">{{ contact.company || '—' }}</td>
                                     <td class="px-6 py-3">{{ contact.status ? contact.status.name : '—' }}</td>
                                     <td class="px-6 py-3">{{ contact.responsible ? contact.responsible.name : '—' }}</td>
@@ -206,6 +210,14 @@ const formatDate = (dateString) => {
                         <div>
                             <p class="text-sm text-gray-500">Email</p>
                             <p class="font-medium text-gray-900">{{ selectedContact.email }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Email Personal</p>
+                            <p class="font-medium text-gray-900">{{ selectedContact.email_personal || '—' }}</p>
+                        </div>
+                         <div>
+                            <p class="text-sm text-gray-500">Email Corporativo</p>
+                            <p class="font-medium text-gray-900">{{ selectedContact.email_corporativo || '—' }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Empresa</p>

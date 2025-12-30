@@ -27,6 +27,8 @@ const form = useForm({
     relation_type_id: props.contact ? props.contact.relation_type_id : '',
     status_id: props.contact ? props.contact.status_id : '',
     email: props.contact ? props.contact.email : '',
+    email_personal: props.contact ? props.contact.email_personal : '',
+    email_corporativo: props.contact ? props.contact.email_corporativo : '',
     address: props.contact ? props.contact.address : '',
     phone: props.contact ? props.contact.phone : '',
     city: props.contact ? props.contact.city : '',
@@ -170,6 +172,20 @@ const deleteTag = (tag) => {
                         <InputLabel for="email" value="Correo electrónico" />
                         <TextInput id="email" type="email" v-model="form.email" class="w-full mt-1" required />
                         <InputError :message="form.errors.email" class="mt-1" />
+                    </div>
+
+                    <!-- Email Personal -->
+                    <div>
+                        <InputLabel for="email_personal" value="Correo Personal" />
+                        <TextInput id="email_personal" type="email" v-model="form.email_personal" class="w-full mt-1" />
+                        <InputError :message="form.errors.email_personal" class="mt-1" />
+                    </div>
+
+                    <!-- Email Corporativo -->
+                    <div>
+                        <InputLabel for="email_corporativo" value="Correo Corporativo" />
+                        <TextInput id="email_corporativo" type="email" v-model="form.email_corporativo" class="w-full mt-1" />
+                        <InputError :message="form.errors.email_corporativo" class="mt-1" />
                     </div>
 
                     <!-- Address -->

@@ -15,6 +15,8 @@ class Contact extends Model
         'company',
         'contact_type_id',
         'email',
+        'email_personal',
+        'email_corporativo',
         'phone',
         'address',
         'city',

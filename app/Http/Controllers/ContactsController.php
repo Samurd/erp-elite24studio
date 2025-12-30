@@ -66,6 +66,8 @@ class ContactsController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:contacts',
+            'email_personal' => 'nullable|email',
+            'email_corporativo' => 'nullable|email',
             'company' => 'required|string|max:255',
             'contact_type_id' => 'required|integer',
             'relation_type_id' => 'required|integer',
@@ -99,6 +101,8 @@ class ContactsController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:contacts,email,' . $contact->id,
+            'email_personal' => 'nullable|email',
+            'email_corporativo' => 'nullable|email',
             'company' => 'required|string|max:255',
             'contact_type_id' => 'required|integer',
             'relation_type_id' => 'required|integer',
