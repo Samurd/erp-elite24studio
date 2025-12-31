@@ -34,7 +34,9 @@ const chatsList = ref(props.chats);
 const activeUserId = ref(props.initialSelectedUser?.id || null);
 
 const messagesContainer = ref(null);
+const topSentry = ref(null); // Element to trigger load more
 const isLoadingOld = ref(false);
+const allLoaded = ref(false);
 const newMessage = ref('');
 const showEmojiPicker = ref(false);
 const fileInput = ref(null);
@@ -58,36 +60,26 @@ const selectUser = (user) => {
     const userId = user.id;
     if (activeUserId.value === userId) return;
 
-    isLoadingChat.value = true;
-    
-    // Update active ID immediately for UI feedback (selection highlight)
+    // UI Feedback immediately
     activeUserId.value = userId;
-    // Optimistically set selectedUser so the main view (and skeleton) renders immediately
     selectedUser.value = user;
-    
-    // Optional: Update URL without reload
-    const url = route('teams.chats', userId);
-    window.history.pushState({}, '', url);
+    isLoadingChat.value = true;
+    messages.value = []; // Clear previous messages while loading
+    allLoaded.value = false; // Reset pagination status
 
-    axios.get(route('teams.chats.conversation', userId))
-        .then(response => {
-            const data = response.data;
-            
-            selectedUser.value = data.user;
-            selectedChat.value = data.chat;
-            messages.value = data.messages || [];
-            optimisticMessages.value = [];
-            
-            scrollToBottom();
-            setupEcho();
-        })
-        .catch(error => {
-            console.error("Error loading chat conversation", error);
-            // Revert activeUserId if failed? 
-        })
-        .finally(() => {
+    router.get(route('teams.chats', userId), {}, {
+        only: ['initialSelectedUser', 'initialSelectedChat', 'initialMessages'],
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => {
+             // selectedUser/messages will update via props watchers
+             scrollToBottom();
+             setupEcho();
+        },
+        onFinish: () => {
             isLoadingChat.value = false;
-        });
+        }
+    });
 };
 
 const scrollToBottom = () => {
@@ -175,7 +167,7 @@ const sendMessage = () => {
         refreshChats();
 
     }).catch(error => {
-        console.error("Send error", error);
+        // console.error("Send error", error);
         // Mark optimistic as failed?
     });
 };
@@ -220,10 +212,14 @@ const refreshChats = () => {
     router.reload({ only: ['chats'] });
 };
 
-// Infinite Scroll
+// Infinite Scroll - WhatsApp style
 const loadMore = () => {
-    if (isLoadingOld.value || messages.value.length === 0) return;
+    if (isLoadingOld.value || messages.value.length === 0 || allLoaded.value) return;
     
+    // Capture current height before loading to restore position
+    const container = messagesContainer.value;
+    const previousHeight = container ? container.scrollHeight : 0;
+
     const oldestId = messages.value[0].id;
     isLoadingOld.value = true;
     
@@ -231,12 +227,44 @@ const loadMore = () => {
         params: { cursor: oldestId }
     }).then(res => {
         const newMessages = res.data.messages;
+        
+        if (newMessages.length < 20) {
+            allLoaded.value = true;
+        }
+
         if (newMessages.length > 0) {
             messages.value = [...newMessages, ...messages.value];
-            // Maintain scroll? implementation detail
+            
+            // Restore scroll position
+            nextTick(() => {
+                if (container) {
+                    const newHeight = container.scrollHeight;
+                    container.scrollTop = newHeight - previousHeight;
+                }
+            });
         }
         isLoadingOld.value = false;
     });
+};
+
+let observer = null;
+const setupInfiniteScroll = () => {
+    if (observer) observer.disconnect();
+    
+    observer = new IntersectionObserver((entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && !isLoadingOld.value && messages.value.length >= 20) { // arbitrary threshold check
+            loadMore();
+        }
+    }, {
+        root: messagesContainer.value,
+        rootMargin: '20px 0px 0px 0px', // Trigger closer to top so user sees the loading
+        threshold: 0
+    });
+
+    if (topSentry.value) {
+        observer.observe(topSentry.value);
+    }
 };
 
 // Echo
@@ -265,6 +293,18 @@ const setupEcho = () => {
 onMounted(() => {
     scrollToBottom();
     setupEcho();
+    setupInfiniteScroll();
+});
+
+// Re-attach observer when view changes (e.g. user switch) because refs might change? 
+// Actually refs stay but we might need to re-observe if DOM recreated.
+// The container is inside v-if="selectedUser", so it is recreated.
+// We should watch selectedUser or container ref.
+
+watch(messagesContainer, (newVal) => {
+    if (newVal) {
+        setupInfiniteScroll();
+    }
 });
 
 watch(() => props.initialSelectedUser, (newVal) => {
@@ -275,8 +315,22 @@ watch(() => props.initialSelectedUser, (newVal) => {
     }
 });
 
+watch(() => props.initialSelectedChat, (newVal) => {
+    selectedChat.value = newVal;
+    // Re-setup echo if chat changes and we aren't loading? 
+    // Usually setupEcho is called in onSuccess, which happens after this.
+});
+
 watch(() => props.initialMessages, (newVal) => {
-    if (newVal) messages.value = newVal;
+    if (newVal) {
+        messages.value = newVal;
+        // If initial load less than 20, assume all loaded
+        if (newVal.length < 20) {
+            allLoaded.value = true;
+        } else {
+            allLoaded.value = false;
+        }
+    }
 });
 
 // Format date helper
@@ -345,7 +399,7 @@ const isMe = (userId) => userId === currentUser.id;
                                     <div v-else class="text-sm text-gray-400 italic">Sin mensajes</div>
                                 </div>
                                 <span v-if="chat.last_message" class="text-xs text-gray-400 ml-2 whitespace-nowrap">
-                                    {{ chat.last_message.created_at }} // Fix format
+                                    {{ chat.last_message.created_at }}
                                 </span>
                              </div>
                              </template>
@@ -423,15 +477,26 @@ const isMe = (userId) => userId === currentUser.id;
 
                     <!-- Mensajes -->
                     <div v-else ref="messagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4">
-                        <!-- Boton cargar mas -->
-                        <div v-if="!isLoadingOld && messages.length >= 20" class="flex justify-center">
-                            <button @click="loadMore" class="text-xs text-gray-500 hover:text-gray-700">
-                                Cargar mensajes anteriores
-                            </button>
+                        <!-- Boton cargar mas / Sentry -->
+                        <div v-show="!allLoaded" ref="topSentry" class="w-full transition-all duration-300">
+                             <div v-if="isLoadingOld" class="py-6 px-4 space-y-4">
+                                 <!-- Skeletons estilo WhatsApp -->
+                                 <div class="flex items-start space-x-3 opacity-60">
+                                    <div class="rounded-full bg-gray-200 h-8 w-8 animate-pulse"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-10 bg-gray-200 rounded-2xl rounded-tl-none w-1/3 animate-pulse"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3 justify-end opacity-60">
+                                     <div class="flex-1 flex justify-end">
+                                        <div class="h-10 bg-gray-200 rounded-2xl rounded-tr-none w-1/4 animate-pulse"></div>
+                                    </div>
+                                     <div class="rounded-full bg-gray-200 h-8 w-8 animate-pulse"></div>
+                                </div>
+                             </div>
+                             <div v-else class="h-2 w-full"></div>
                         </div>
-                        <div v-if="isLoadingOld" class="flex justify-center">
-                             <span class="loading loading-spinner loading-xs text-gray-400"></span>
-                        </div>
+
 
                         <!-- Lista Mensajes -->
                         <template v-if="messages.length > 0">

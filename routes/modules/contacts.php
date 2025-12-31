@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Livewire\Modules\Contacts\Index;
-use App\Livewire\Modules\Contacts\CreateOrUpdate;
 
 Route::prefix('contacts')->name('contacts.')->middleware('web')->group(function () {
     Route::get('/', [\App\Http\Controllers\ContactsController::class, 'index'])->name('index')->middleware('can-area:view,contactos');

@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Events\MessageSent;
 use App\Services\NotificationService;
+
 use Illuminate\Support\Facades\Log;
+use App\Actions\Cloud\Files\UploadFileAction;
+use App\Actions\Cloud\Folders\GetOrCreateFolderAction;
+use App\Models\Area;
 
 class TeamChannelController extends Controller
 {
@@ -135,7 +139,15 @@ class TeamChannelController extends Controller
         $beforeId = $request->input('before_id');
 
         $query = $channel->messages()
-            ->with(['user', 'files'])
+            ->with([
+                'user:id,name,email,profile_photo_path',
+                'files',
+                'replies.user:id,name,email,profile_photo_path',
+                'replies.files',
+                'reactions',
+                'replies.reactions'
+            ])
+            ->whereNull('parent_id')
             ->latest();
 
         if ($beforeId) {
@@ -146,53 +158,58 @@ class TeamChannelController extends Controller
             ->get()
             ->reverse()
             ->map(function ($msg) {
-                return [
-                    'id' => $msg->id,
-                    'content' => $msg->content,
-                    'user_id' => $msg->user_id,
-                    'created_at' => $msg->created_at->format('Y-m-d H:i:s'),
-                    'user' => ['name' => $msg->user->name],
-                    'files' => $msg->files->map(fn($f) => [
-                        'url' => $f->url,
-                        'name' => $f->name,
-                        'readable_size' => $f->readable_size
-                    ])
-                ];
+                return $this->formatMessage($msg);
             })
             ->values();
 
         return response()->json($messages);
     }
 
-    public function sendMessage(Request $request, Team $team, TeamChannel $channel, NotificationService $notificationService)
+    public function sendMessage(Request $request, Team $team, TeamChannel $channel, NotificationService $notificationService, UploadFileAction $uploader, GetOrCreateFolderAction $folderMaker)
     {
         $this->checkAccess($team, $channel);
 
         // Auth check etc
 
-        $request->validate(['content' => 'required_without:files']); // simplified
+        $request->validate([
+            'content' => 'nullable|string', // Nullable if files exist
+            'parent_id' => 'nullable|exists:messages,id',
+            'files.*' => 'file|max:51200'
+        ]);
+
+        if (!$request->input('content') && !$request->hasFile('files')) {
+            return response()->json(['error' => 'Mensaje vacío'], 422);
+        }
 
         $msg = Message::create([
             'user_id' => Auth::id(),
             'channel_id' => $channel->id,
             'content' => $request->input('content') ?? '',
-            'type' => 'text'
+            'type' => 'text',
+            'parent_id' => $request->input('parent_id')
         ]);
 
-        // If attachments... (Handle handled by dedicated Attachment actions usually, or passed here)
-        // For migration purpose, assume files might be linked here or via separate action.
-        // The implementation plan mentions "commit-chat-attachments". 
-        // We'll rely on a standard implementation or the specific logic from `ChannelChat.php`.
-        // In `ChannelChat.php` logic:
-        // `commit-chat-attachments` is emitted. 
-        // Ideally we should use the existing logic or `ModelAttachmentsCreator`.
+        // Handle files
+        if ($request->hasFile('files')) {
+            $area = Area::where('slug', 'teams')->first();
+            // Fallback or handle error if area not found? assuming exists as per Private Chat logic
 
-        // Let's assume frontend sends file IDs to attach if any.
+            if ($area) {
+                // Store in Chats/Channels/{id}
+                $folderPath = 'Chats/Channels/' . $channel->id;
+                $folder = $folderMaker->execute($folderPath, null);
+
+                $uploader->execute($request->file('files'), $msg, $folder->id, $area->id);
+            }
+        }
 
         $msg->load(['user', 'files']);
 
         // Broadcast
         try {
+            $msg->load(['replies.user', 'replies.files']); // Load replies too if it was a reply? No, a new message/reply won't have deep replies yet.
+            // But we need to eager load what formatMessage needs.
+
             broadcast(new MessageSent($team->id, $channel->id, $msg))->toOthers();
 
             // Get recipients based on channel type
@@ -237,21 +254,106 @@ class TeamChannelController extends Controller
         } catch (\Exception $e) {
             Log::error('Error broadcasting channel message: ' . $e->getMessage());
         }
-
         return response()->json([
             'status' => 'ok',
-            'message' => [
-                'id' => $msg->id,
-                'content' => $msg->content,
-                'user_id' => $msg->user_id,
-                'created_at' => $msg->created_at->format('Y-m-d H:i:s'),
-                'user' => ['name' => $msg->user->name],
-                'files' => $msg->files->map(fn($f) => [
-                    'url' => $f->url,
+            'message' => $this->formatMessage($msg)
+        ]);
+    }
+    public function toggleReaction(Request $request, Team $team, TeamChannel $channel, Message $message)
+    {
+        $this->checkAccess($team, $channel);
+
+        // Ensure message belongs to channel
+        if ($message->channel_id !== $channel->id && $message->parent && $message->parent->channel_id !== $channel->id) {
+            // Handle replies too or strict check?
+            // Assuming message ID is unique global, but security wise good to check.
+            // If reply, it has parent.
+        }
+
+        $request->validate(['emoji' => 'required|string']);
+        $emoji = $request->input('emoji');
+        $userId = Auth::id();
+
+        $existing = \App\Models\MessageReaction::where('message_id', $message->id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($existing) {
+            if ($existing->emoji === $emoji) {
+                // Remove if same
+                $existing->delete();
+            } else {
+                // Update if different
+                $existing->update(['emoji' => $emoji]);
+            }
+        } else {
+            \App\Models\MessageReaction::create([
+                'message_id' => $message->id,
+                'user_id' => $userId,
+                'emoji' => $emoji
+            ]);
+        }
+
+        // Broadcast update
+        $message->load('reactions'); // Reload reactions
+
+        // Group reactions for frontend
+        $reactions = $message->reactions->groupBy('emoji')->map(function ($group) {
+            return [
+                'emoji' => $group->first()->emoji,
+                'count' => $group->count(),
+                'users' => $group->pluck('user_id') // Optional: list of user IDs if needed for hover
+            ];
+        })->values();
+
+        broadcast(new \App\Events\MessageReactionUpdated($team->id, $channel->id, $message->id, $reactions))->toOthers();
+
+        return response()->json(['status' => 'ok', 'reactions' => $reactions]);
+    }
+
+    private function formatMessage($msg)
+    {
+        $formatReactions = function ($msg) {
+            return $msg->reactions->groupBy('emoji')->map(function ($group) {
+                return [
+                    'emoji' => $group->first()->emoji,
+                    'count' => $group->count(),
+                    'user_reacted' => $group->contains('user_id', Auth::id())
+                ];
+            })->values();
+        };
+
+        return [
+            'id' => $msg->id,
+            'content' => $msg->content,
+            'user_id' => $msg->user_id,
+            'created_at' => $msg->created_at->format('Y-m-d H:i:s'),
+            'user' => [
+                'name' => $msg->user->name,
+                'profile_photo_url' => $msg->user->profile_photo_url
+            ],
+            'files' => $msg->files->map(fn($f) => [
+                'url' => route('cloud.file.download', ['file' => $f->id]),
+                'name' => $f->name,
+                'readable_size' => $f->readable_size
+            ]),
+            'reactions' => $formatReactions($msg),
+            'replies' => $msg->replies->map(fn($r) => [
+                'id' => $r->id,
+                'content' => $r->content,
+                'user_id' => $r->user_id,
+                'created_at' => $r->created_at->format('Y-m-d H:i:s'),
+                'user' => [
+                    'name' => $r->user->name,
+                    'profile_photo_url' => $r->user->profile_photo_url
+                ],
+                'files' => $r->files->map(fn($f) => [
+                    'url' => route('cloud.file.download', ['file' => $f->id]),
                     'name' => $f->name,
                     'readable_size' => $f->readable_size
-                ])
-            ]
-        ]);
+                ]),
+                'reactions' => $formatReactions($r)
+            ])
+        ];
     }
 }

@@ -8,7 +8,7 @@ use App\Livewire\Modules\Teams\Show;
 use App\Livewire\Modules\Teams\Update;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('can-area:view,teams')
+Route::middleware('permission:teams.view')
     ->prefix('teams')
     ->name('teams.')
     ->group(function () {
@@ -55,5 +55,6 @@ Route::middleware('can-area:view,teams')
             // Chat API
             Route::get('/{team}/channels/{channel}/messages', 'messages')->name('channels.messages');
             Route::post('/{team}/channels/{channel}/messages', 'sendMessage')->name('channels.messages.store');
+            Route::post('/{team}/channels/{channel}/messages/{message}/react', 'toggleReaction')->name('channels.messages.react');
         });
     });

@@ -20,10 +20,23 @@ const props = defineProps({
     teamRoles: Array,
     availableUsers: Array,
     isPrivateTeamNonMember: Boolean,
+    isMember: Boolean,
+    currentUserRole: Object,
+    teamRoles: Array,
+    availableUsers: Array,
+    isPrivateTeamNonMember: Boolean,
 });
 
 const activeChannel = ref(null);
 const activeTab = ref('canales');
+
+// Check URL params for initial channel on mount (optional but good for UX)
+// const urlParams = new URLSearchParams(window.location.search);
+// const channelId = urlParams.get('channel');
+// if (channelId) {
+//    activeChannel.value = props.channels.find(c => c.id == channelId);
+//    if (activeChannel.value) activeTab.value = 'chat';
+// }
 
 const selectChannel = (ch) => {
     activeChannel.value = ch;
@@ -46,9 +59,20 @@ const page = usePage();
 const flashMessage = computed(() => page.props.flash.message);
 const flashError = computed(() => page.props.flash.error);
 
+const searchMemberQuery = ref('');
+
 // Compute derived data for members to match blade logic
-const owners = computed(() => props.members.filter(m => m.role_slug === 'owner'));
-const regularMembers = computed(() => props.members.filter(m => m.role_slug === 'member'));
+const filteredMembers = computed(() => {
+    if (!searchMemberQuery.value) return props.members;
+    const q = searchMemberQuery.value.toLowerCase();
+    return props.members.filter(m => 
+        m.name.toLowerCase().includes(q) || 
+        m.email.toLowerCase().includes(q)
+    );
+});
+
+const owners = computed(() => filteredMembers.value.filter(m => m.role_slug === 'owner'));
+const regularMembers = computed(() => filteredMembers.value.filter(m => m.role_slug === 'member'));
 
 const organizedChannels = computed(() => {
     // Ensure channels prop exists
@@ -431,10 +455,25 @@ const toggleAddMember = () => {
                                 <div v-if="activeTab === 'miembros'">
                                      <div class="flex items-center justify-between mb-6">
                                         <h3 class="text-lg font-semibold text-gray-900">Miembros del Equipo</h3>
-                                        <button v-if="isOwner" @click="toggleAddMember"
-                                            class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center">
-                                            <i class="fas fa-user-plus mr-2"></i> Agregar Miembro
-                                        </button>
+                                        
+                                        <div class="flex items-center gap-3">
+                                            <div class="relative">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <i class="fas fa-search text-gray-400"></i>
+                                                </div>
+                                                <input 
+                                                    v-model="searchMemberQuery" 
+                                                    type="text" 
+                                                    placeholder="Buscar miembro..." 
+                                                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-yellow-500 focus:border-yellow-500 w-64 transition-all"
+                                                >
+                                            </div>
+
+                                            <button v-if="isOwner" @click="toggleAddMember"
+                                                class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center text-sm font-medium">
+                                                <i class="fas fa-user-plus mr-2"></i> Agregar
+                                            </button>
+                                        </div>
                                     </div>
                                     
                                     <div v-show="showAddMember" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">

@@ -13,6 +13,7 @@ Route::middleware("can-area:view,cloud")
         Route::post("/upload", [\App\Http\Controllers\CloudController::class, 'uploadFile'])->name("file.upload");
         Route::put("/{id}/rename", [\App\Http\Controllers\CloudController::class, 'rename'])->name("rename");
         Route::delete("/{id}", [\App\Http\Controllers\CloudController::class, 'delete'])->name("delete");
+        Route::get("/file/{file}/download", [\App\Http\Controllers\CloudController::class, 'download'])->name("file.download");
 
         // Sharing
         Route::get("/{type}/{id}/share-data", [\App\Http\Controllers\CloudController::class, 'getShareData'])->name("share.data");

@@ -18,12 +18,14 @@ class UploadFileAction
      * @param int|null $folderId ID de la carpeta visual
      * @param int|null $areaId ID del área para permisos (Nuevo)
      */
-    public function execute($files, ?Model $contextModel = null, ?int $folderId = null, ?int $areaId = null): void
+    public function execute($files, ?Model $contextModel = null, ?int $folderId = null, ?int $areaId = null): array
     {
         // Normalizar a array
         $files = is_array($files) ? $files : [$files];
 
-        DB::transaction(function () use ($files, $contextModel, $folderId, $areaId) {
+        return DB::transaction(function () use ($files, $contextModel, $folderId, $areaId) {
+            $createdFiles = [];
+
             foreach ($files as $uploadedFile) {
 
                 // 1. Configuración
@@ -65,7 +67,11 @@ class UploadFileAction
                         ]
                     ]);
                 }
+
+                $createdFiles[] = $file;
             }
+
+            return $createdFiles;
         });
     }
 }

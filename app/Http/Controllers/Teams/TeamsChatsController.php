@@ -20,39 +20,22 @@ class TeamsChatsController extends Controller
 {
     public function index(Request $request, $userId = null)
     {
-        // Users list (excluding current)
-        $users = User::where('id', '!=', Auth::id())
-            ->orderBy('name')
-            ->get(); // Get all columns to ensure profile_photo_url works correctly with appends
-
-        // Load existing chats
-        $chats = $this->getChats();
-
-        $selectedUser = null;
-        $selectedChat = null;
-        $messages = [];
-
-        if ($userId) {
-            $selectedUser = User::find($userId);
-            if ($selectedUser) {
-                // Determine if we need to mark messages as read? (Logic wasn't explicit in Livewire mount, but usually good practice)
-
-                $selectedChat = Auth::user()->chatWith($userId);
-
-                // Load messages if chat exists
-                if ($selectedChat) {
-                    $limit = $request->input('limit', 20);
-                    $messages = $this->getMessages($selectedChat, $limit);
-                }
-            }
-        }
-
         return Inertia::render('Teams/Chats', [
-            'users' => $users,
-            'chats' => $chats,
-            'initialSelectedUser' => $selectedUser, // Pass as initial prop
-            'initialSelectedChat' => $selectedChat,
-            'initialMessages' => $messages,
+            // Lazy load sidebar data (users/chats) so they aren't re-fetched when switching conversations if we preserve status
+            'users' => fn() => User::where('id', '!=', Auth::id())
+                ->orderBy('name')
+                ->get(),
+
+            'chats' => fn() => $this->getChats(),
+
+            // Selected conversation data - only calculate if userId is present
+            'initialSelectedUser' => fn() => $userId ? User::find($userId) : null,
+
+            'initialSelectedChat' => fn() => $userId ? Auth::user()->chatWith($userId) : null,
+
+            'initialMessages' => fn() => ($userId && ($chat = Auth::user()->chatWith($userId)))
+                ? $this->getMessages($chat, $request->input('limit', 20))
+                : [],
         ]);
     }
 
@@ -254,7 +237,7 @@ class TeamsChatsController extends Controller
                 return [
                     'id' => $f->id,
                     'name' => $f->name,
-                    'url' => $f->url,
+                    'url' => route('cloud.file.download', ['file' => $f->id]),
                     'readable_size' => $f->readable_size,
                     'mime_type' => $f->mime_type
                 ];

@@ -418,4 +418,51 @@ class CloudController extends Controller
 
         return back()->with('success', 'Enlace eliminado.');
     }
+
+    public function download(File $file)
+    {
+        // Permission Check
+        $user = Auth::user();
+        $canView = false;
+
+        // 1. Owner
+        if ($file->user_id === $user->id) {
+            $canView = true;
+        }
+
+        // 2. Shared
+        if (!$canView && $file->shares()->where('shared_with_user_id', $user->id)->exists()) {
+            $canView = true;
+        }
+
+        // 3. Admin
+        if (!$canView && $user->can('cloud.view')) {
+            $canView = true;
+        }
+
+        // 4. Linked to accessible model (Message)
+        if (!$canView) {
+            $linkedMessages = $file->messages; // Assumes relationship exists in File model
+            foreach ($linkedMessages as $msg) {
+                // Check if user is in channel/team of message
+                if ($msg->channel_id) {
+                    if ($msg->channel->members->contains($user->id) || $msg->channel->team->members->contains($user->id)) { // Simplification
+                        $canView = true;
+                        break;
+                    }
+                } elseif ($msg->private_chat_id) {
+                    if ($msg->privateChat->participants->contains($user->id)) {
+                        $canView = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$canView) {
+            abort(403, 'No tienes permiso para descargar este archivo.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk($file->disk)->download($file->path, $file->name);
+    }
 }
