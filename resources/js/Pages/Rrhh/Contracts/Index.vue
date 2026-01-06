@@ -8,16 +8,22 @@ import { debounce } from 'lodash'
 const props = defineProps({
     contracts: Object,
     statusOptions: Array,
+    typeOptions: Array,
+    categoryOptions: Array,
     filters: Object,
 })
 
 const search = ref(props.filters.search || '')
 const status_id = ref(props.filters.status_id || '')
+const type_id = ref(props.filters.type_id || '')
+const category_id = ref(props.filters.category_id || '')
 
-watch([search, status_id], debounce(() => {
+watch([search, status_id, type_id, category_id], debounce(() => {
     router.get(route('rrhh.contracts.index'), {
         search: search.value,
         status_id: status_id.value,
+        type_id: type_id.value,
+        category_id: category_id.value,
     }, { preserveState: true, replace: true })
 }, 300))
 
@@ -59,22 +65,44 @@ const deleteContract = (id) => {
             </div>
 
             <!-- Filters -->
-            <div class="bg-white rounded-lg shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white rounded-lg shadow-sm p-4 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     <input
                         v-model="search"
                         type="text"
-                        placeholder="Buscar por nombre o identificación..."
+                        placeholder="Buscar..."
                         class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     />
+                </div>
+                <div>
+                     <select
+                        v-model="type_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    >
+                        <option value="">Tipo de Contrato</option>
+                        <option v-for="type in typeOptions" :key="type.id" :value="type.id">
+                            {{ type.name }}
+                        </option>
+                    </select>
+                </div>
+                <div>
+                     <select
+                        v-model="category_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    >
+                        <option value="">Tipo de Relación</option>
+                        <option v-for="category in categoryOptions" :key="category.id" :value="category.id">
+                            {{ category.name }}
+                        </option>
+                    </select>
                 </div>
                 <div>
                      <select
                         v-model="status_id"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     >
-                        <option value="">Todos los estados</option>
+                        <option value="">Estado</option>
                         <option v-for="status in statusOptions" :key="status.id" :value="status.id">
                             {{ status.name }}
                         </option>

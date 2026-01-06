@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasFiles;
 
 class Contract extends Model
 {
+    use HasFiles;
     protected $fillable = [
         'employee_id',
         'type_id',
@@ -49,10 +51,7 @@ class Contract extends Model
         return $this->belongsTo(\App\Models\User::class, 'registered_by_id');
     }
 
-    public function files()
-    {
-        return $this->morphMany(\App\Models\File::class, 'fileable');
-    }
+
 
 
 }

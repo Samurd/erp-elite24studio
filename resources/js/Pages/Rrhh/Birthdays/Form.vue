@@ -1,6 +1,8 @@
 <script setup>
 import { useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import MoneyInput from '@/Components/MoneyInput.vue'
+import RichSelect from '@/Components/RichSelect.vue'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
@@ -126,15 +128,12 @@ const submit = () => {
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Responsable de Gestión</label>
-                            <select
+                            <RichSelect
                                 v-model="form.responsible_id"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            >
-                                <option value="">Seleccionar responsable</option>
-                                <option v-for="user in users" :key="user.id" :value="user.id">
-                                    {{ user.name }}
-                                </option>
-                            </select>
+                                :options="users"
+                                placeholder="Seleccionar responsable..."
+                                class="w-full"
+                            />
                             <span v-if="form.errors.responsible_id" class="text-red-500 text-sm">{{ form.errors.responsible_id }}</span>
                         </div>
 

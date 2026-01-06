@@ -8,7 +8,7 @@ use App\Models\Employee;
 use App\Models\Tag;
 use App\Models\TagCategory;
 use App\Models\File;
-use App\Actions\LinkFileAction;
+use App\Actions\Cloud\Files\LinkFileAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -31,18 +31,25 @@ class RrhhContractsController extends Controller
             $query->where('status_id', $request->status_id);
         }
 
+        if ($request->type_id) {
+            $query->where('type_id', $request->type_id);
+        }
+
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
         $contracts = $query->with(['employee', 'type', 'category', 'status'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->perPage ?? 10)
             ->withQueryString();
 
-        $statusCategory = TagCategory::where('slug', 'estado_contrato')->first();
-        $statusOptions = $statusCategory ? Tag::where('category_id', $statusCategory->id)->get() : collect();
-
         return Inertia::render('Rrhh/Contracts/Index', [
             'contracts' => $contracts,
-            'statusOptions' => $statusOptions,
-            'filters' => $request->only(['search', 'status_id']),
+            'statusOptions' => $this->getTags('estado_contrato'),
+            'typeOptions' => $this->getTags('tipo_contrato_contratos'),
+            'categoryOptions' => $this->getTags('tipo_relacion'),
+            'filters' => $request->only(['search', 'status_id', 'type_id', 'category_id']),
         ]);
     }
 

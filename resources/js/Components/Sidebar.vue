@@ -52,7 +52,7 @@ const isActive = (path) => {
                     <i class="fas fa-chart-line w-7 h-7 text-xl"></i>
                     <span class="flex flex-col">
                         <span class="">Finanzas</span>
-                        <span class="text-[0.65rem] ">CRM Clientes-Alianzas-Partners-Empleados</span>
+                        <span class="text-[0.65rem] ">Contabilidad Empresarial -Ventas - Gastos</span>
                     </span>
                 </Link>
 
