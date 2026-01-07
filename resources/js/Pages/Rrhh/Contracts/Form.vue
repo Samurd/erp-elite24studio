@@ -4,7 +4,9 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import ModelAttachmentsCreator from '@/Components/Cloud/ModelAttachmentsCreator.vue'
 import ModelAttachments from '@/Components/Cloud/ModelAttachments.vue'
 import MoneyInput from '@/Components/MoneyInput.vue'
-import { computed } from 'vue'
+import RichSelect from '@/Components/RichSelect.vue'
+import TagManagerModal from '@/Components/Rrhh/TagManagerModal.vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
     contract: Object, // Null if creating
@@ -12,6 +14,7 @@ const props = defineProps({
     typeOptions: Array,
     categoryOptions: Array,
     statusOptions: Array,
+    scheduleOptions: Array,
 })
 
 const isEditing = computed(() => !!props.contract)
@@ -24,7 +27,7 @@ const form = useForm({
     start_date: props.contract?.start_date ? props.contract.start_date.substring(0, 10) : new Date().toISOString().substring(0, 10),
     end_date: props.contract?.end_date ? props.contract.end_date.substring(0, 10) : '',
     amount: props.contract?.amount || '',
-    schedule: props.contract?.schedule || '',
+    schedule_id: props.contract?.schedule_id || '',
     files: [],
     pending_file_ids: [],
 })
@@ -44,6 +47,21 @@ const deleteContract = () => {
         router.delete(route('rrhh.contracts.destroy', props.contract.id))
     }
 }
+
+// Tag Manager Logic
+const showTagManager = ref(false);
+
+const openTagManager = () => {
+    showTagManager.value = true;
+};
+
+const closeTagManager = () => {
+    showTagManager.value = false;
+};
+
+const refreshOptions = () => {
+    router.reload({ only: ['scheduleOptions'] });
+};
 </script>
 
 <template>
@@ -163,17 +181,31 @@ const deleteContract = () => {
                             <span v-if="form.errors.end_date" class="text-red-500 text-sm">{{ form.errors.end_date }}</span>
                         </div>
                         
-                         <!-- Horario -->
+                        <!-- Horario -->
                         <div class="md:col-span-2">
-                             <label class="block text-sm font-medium text-gray-700 mb-2">Horario Laboral</label>
-                             <input
-                                v-model="form.schedule"
-                                type="text"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                placeholder="Ej: Lunes a Viernes 8am - 5pm"
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-sm font-medium text-gray-700">Horario Laboral</label>
+                                <button type="button" @click="openTagManager" class="text-xs text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-cog mr-1"></i> Gestionar
+                                </button>
+                            </div>
+                            <RichSelect
+                                v-model="form.schedule_id"
+                                :options="scheduleOptions"
+                                placeholder="Seleccionar Horario"
+                                class="w-full"
                             />
-                             <span v-if="form.errors.schedule" class="text-red-500 text-sm">{{ form.errors.schedule }}</span>
+                            <span v-if="form.errors.schedule_id" class="text-red-500 text-sm">{{ form.errors.schedule_id }}</span>
                         </div>
+
+                         <TagManagerModal 
+                            :show="showTagManager"
+                            title="Horarios Laborales"
+                            category-slug="horario_laboral"
+                            :options="scheduleOptions"
+                            @close="closeTagManager"
+                            @refresh="refreshOptions"
+                        />
 
                         <!-- Archivos Adjuntos -->
                         <div class="md:col-span-2 mt-4 pt-4 border-t">

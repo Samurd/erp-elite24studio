@@ -20,7 +20,7 @@ const formatDate = (date) => {
 
 const formatCurrency = (amount) => {
     if (!amount) return '-'
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount)
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount / 100)
 }
 
 const getStatusColor = (statusName) => {
@@ -130,7 +130,7 @@ const getStatusColor = (statusName) => {
                          <i class="fas fa-clock text-indigo-500 text-xl"></i>
                          <div>
                              <p class="text-sm text-gray-500">Horario</p>
-                             <p class="font-semibold text-gray-800">{{ contract.schedule || '-' }}</p>
+                             <p class="font-semibold text-gray-800">{{ contract.schedule?.name || '-' }}</p>
                          </div>
                      </div>
 

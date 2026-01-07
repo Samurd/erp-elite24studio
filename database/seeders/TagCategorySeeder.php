@@ -96,6 +96,7 @@ class TagCategorySeeder extends Seeder
             ["slug" => "tipo_contrato_contratos", "label" => "Tipo de Contrato"],
 
             ["slug" => "estado_offboarding", "label" => "Estado de Off-boarding"],
+            ["slug" => "horario_laboral", "label" => "Horario Laboral"],
         ];
 
         foreach ($categories as $category) {

@@ -61,6 +61,7 @@ class RrhhContractsController extends Controller
             'typeOptions' => $this->getTags('tipo_contrato_contratos'),
             'categoryOptions' => $this->getTags('tipo_relacion'),
             'statusOptions' => $this->getTags('estado_contrato'),
+            'scheduleOptions' => $this->getTags('horario_laboral'),
         ]);
     }
 
@@ -74,7 +75,8 @@ class RrhhContractsController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'amount' => 'nullable|numeric|min:0',
-            'schedule' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric|min:0',
+            'schedule_id' => 'nullable|exists:tags,id',
             'pending_file_ids' => 'array',
         ]);
 
@@ -92,12 +94,15 @@ class RrhhContractsController extends Controller
 
     public function edit(Contract $contract)
     {
+        $contract->load('files');
+
         return Inertia::render('Rrhh/Contracts/Form', [
             'contract' => $contract,
             'employees' => Employee::orderBy('full_name')->get(),
             'typeOptions' => $this->getTags('tipo_contrato_contratos'),
             'categoryOptions' => $this->getTags('tipo_relacion'),
             'statusOptions' => $this->getTags('estado_contrato'),
+            'scheduleOptions' => $this->getTags('horario_laboral'),
         ]);
     }
 
@@ -111,7 +116,8 @@ class RrhhContractsController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'amount' => 'nullable|numeric|min:0',
-            'schedule' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric|min:0',
+            'schedule_id' => 'nullable|exists:tags,id',
         ]);
 
         $contract->update($validated);
@@ -121,7 +127,7 @@ class RrhhContractsController extends Controller
 
     public function show(Contract $contract)
     {
-        $contract->load(['employee', 'type', 'category', 'status', 'files', 'registeredBy']);
+        $contract->load(['employee', 'type', 'category', 'status', 'files', 'registeredBy', 'schedule']);
 
         return Inertia::render('Rrhh/Contracts/Show', [
             'contract' => $contract,

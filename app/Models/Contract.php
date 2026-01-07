@@ -16,7 +16,7 @@ class Contract extends Model
         'start_date',
         'end_date',
         'amount',
-        'schedule',
+        'schedule_id',
         'registered_by_id',
     ];
 
@@ -44,6 +44,11 @@ class Contract extends Model
     public function status()
     {
         return $this->belongsTo(\App\Models\Tag::class, 'status_id');
+    }
+
+    public function schedule()
+    {
+        return $this->belongsTo(\App\Models\Tag::class, 'schedule_id');
     }
 
     public function registeredBy()
